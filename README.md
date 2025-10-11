@@ -27,10 +27,10 @@ Build the server and client binaries:
 
 ```bash
 # Build server
-go build -o bin/server ./cmd/server
+go build -o build/server ./cmd/server
 
 # Build client
-go build -o bin/client ./cmd/client
+go build -o build/client ./cmd/client
 ```
 
 ## Usage
@@ -40,7 +40,7 @@ go build -o bin/client ./cmd/client
 First, start the server:
 
 ```bash
-./bin/server -port :8080
+./build/server -port :8080
 ```
 
 Options:
@@ -57,7 +57,7 @@ Server started on [::]:8080
 In a separate terminal, start the client:
 
 ```bash
-./bin/client -server localhost:8080 -username alice
+./build/client -server localhost:8080 -username alice
 ```
 
 Options:
@@ -84,7 +84,7 @@ Type your messages (or 'quit' to exit):
 **Terminal 1: Starting the Server**
 
 ```bash
-$ ./bin/server -port :8080
+$ ./build/server -port :8080
 Starting server on :8080...
 Server started on [::]:8080
 User alice joined
@@ -98,7 +98,7 @@ Message from carol: Hey guys!
 **Terminal 2: Connecting as alice**
 
 ```bash
-$ ./bin/client -server localhost:8080 -username alice
+$ ./build/client -server localhost:8080 -username alice
 Connected to localhost:8080 as alice
 Type your messages (or 'quit' to exit):
 *** bob joined the chat ***
@@ -111,7 +111,7 @@ Hello everyone!
 **Terminal 3: Connecting as bob**
 
 ```bash
-$ ./bin/client -server localhost:8080 -username bob
+$ ./build/client -server localhost:8080 -username bob
 Connected to localhost:8080 as bob
 Type your messages (or 'quit' to exit):
 [alice]: Hello everyone!
@@ -123,7 +123,7 @@ Hi alice!
 **Terminal 4: Connecting as carol**
 
 ```bash
-$ ./bin/client -server localhost:8080 -username carol
+$ ./build/client -server localhost:8080 -username carol
 Connected to localhost:8080 as carol
 Type your messages (or 'quit' to exit):
 [alice]: Hello everyone!
@@ -141,7 +141,7 @@ Failed to start server: listen tcp :8080: bind: address already in use
 
 Specify a different port number:
 ```bash
-./bin/server -port :9090
+./build/server -port :9090
 ```
 
 ### Cannot Connect to Server
