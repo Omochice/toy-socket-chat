@@ -70,16 +70,16 @@ Messages are encoded using Go's `encoding/gob` package, which provides:
 - Built-in support for Go types
 - Automatic handling of complex structures
 
-**Why `gob`?**
-- Simple to use - no schema definition needed
-- Type-safe encoding/decoding
+We chose `gob` for several reasons:
+- Simple to use without schema definitions
+- Type-safe encoding and decoding
 - Good performance for Go-to-Go communication
-- Built into the standard library
+- Available in the standard library
 
-**Trade-offs:**
-- Not interoperable with other languages
-- Binary format (not human-readable)
-- Requires both ends to be Go applications
+However, there are some trade-offs to consider:
+- It's not interoperable with other languages
+- The binary format isn't human-readable
+- Both ends must be Go applications
 
 For a production system, consider:
 - Protocol Buffers for language interoperability
@@ -117,8 +117,8 @@ type Client struct {
    ```
 
 2. **Client Handling** (2 goroutines per client)
-   - **Reader goroutine**: Reads messages from TCP connection
-   - **Writer goroutine**: Writes messages from outgoing channel to TCP connection
+   - Reader goroutine reads messages from the TCP connection
+   - Writer goroutine writes messages from the outgoing channel to the TCP connection
 
 3. **Message Broadcasting**
    ```
@@ -134,28 +134,28 @@ type Client struct {
 
 The server uses a concurrent model with the following characteristics:
 
-**Per-Client Goroutines:**
-- 1 goroutine for reading from client
-- 1 goroutine for writing to client
-- Allows independent read/write operations
-- Prevents blocking on slow clients
+Each client connection uses two dedicated goroutines:
+- One goroutine reads messages from the client
+- Another goroutine writes messages to the client
+- This separation allows independent read/write operations
+- It prevents blocking when a client is slow
 
-**Synchronization:**
+For synchronization:
 ```go
 mu sync.RWMutex  // Protects clients map
 - Read lock: For broadcasting (reading the map)
 - Write lock: For adding/removing clients (modifying the map)
 ```
 
-**Message Queue:**
+The message queue is implemented as a buffered channel:
 ```go
 outgoing chan []byte  // Buffered channel (size: 10)
-- Decouples receiving from sending
-- Prevents blocking on slow clients
-- Drops messages if queue is full
 ```
+- This decouples receiving messages from sending them
+- It prevents blocking when clients are slow
+- Messages are dropped if the queue fills up
 
-**Graceful Shutdown:**
+For graceful shutdown, the server uses:
 ```go
 quit chan struct{}   // Broadcast shutdown signal
 wg sync.WaitGroup    // Wait for all goroutines
@@ -220,17 +220,17 @@ type Client struct {
 
 #### Concurrency Model
 
-**Background Receiver:**
-- Single goroutine continuously reads from TCP connection
-- Decodes messages and sends to `messages` channel
-- Application reads from channel when ready
+A background receiver goroutine handles incoming messages:
+- It continuously reads from the TCP connection
+- Decodes messages and sends them to the `messages` channel
+- The application reads from the channel when ready
 
-**Thread Safety:**
+For thread safety:
 ```go
 mu sync.RWMutex  // Protects connection access
-- Used when checking connection state
-- Prevents concurrent access to connection
 ```
+- This mutex is used when checking connection state
+- It prevents concurrent access to the connection
 
 ## Data Flow
 
@@ -330,12 +330,9 @@ conn.Close()    ←───────────────  Cleanup gorout
 
 ### Buffering
 
-- **Client outgoing channel**: Buffered (10 messages)
-  - Prevents blocking on slow clients
-  - Trade-off: May drop messages if client is very slow
+The client outgoing channel is buffered with a capacity of 10 messages. This prevents blocking when clients are slow, though messages may be dropped if a client becomes very slow.
 
-- **TCP connection**: OS-level buffering
-  - No explicit buffering in application
+TCP connections use OS-level buffering, with no explicit buffering added at the application level.
 
 ### Scalability
 
@@ -362,23 +359,15 @@ Estimated: ~10KB per connected client
 
 ### Why Two Goroutines Per Client?
 
-**Alternative 1**: Single goroutine for both read and write
-- Problem: Blocking on write prevents reading
-- Problem: Blocking on read prevents writing
+We considered using a single goroutine for both reading and writing, but this creates problems: blocking on write prevents reading, and blocking on read prevents writing.
 
-**Alternative 2**: Non-blocking I/O with select
-- More complex code
-- Less idiomatic Go
-- Harder to maintain
+Another option was non-blocking I/O with select statements, but this leads to more complex code that's less idiomatic in Go and harder to maintain.
 
-**Chosen**: Separate goroutines
-- Simple, idiomatic Go
-- Each goroutine has single responsibility
-- Easy to reason about
+We chose separate goroutines because they provide simple, idiomatic Go code where each goroutine has a single responsibility and the flow is easy to reason about.
 
 ### Why Mutex Instead of Channels for Clients Map?
 
-**Alternative**: Use channels to serialize access
+We could have used channels to serialize access to the clients map:
 ```go
 type clientOp struct {
     op      string
@@ -387,14 +376,9 @@ type clientOp struct {
 }
 ```
 
-**Trade-offs:**
-- Channels: More idiomatic, prevents forgetting locks
-- Mutex: Simpler, less overhead, more straightforward
+Channels are more idiomatic and prevent forgetting to lock, but mutexes are simpler with less overhead and more straightforward code.
 
-**Chosen**: Mutex
-- Clearer intent (protecting data structure)
-- Less boilerplate code
-- Better performance for read-heavy workload
+We chose a mutex because it makes the intent clearer (protecting a data structure), requires less boilerplate code, and offers better performance for our read-heavy workload.
 
 ### Why `encoding/gob`?
 

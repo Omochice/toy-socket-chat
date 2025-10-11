@@ -245,7 +245,7 @@ Tests cover:
 - ✅ MessageType string representation
 - ✅ Error cases
 
-**Coverage**: ~100%
+Test coverage is approximately 100%.
 
 ### Server Package (`internal/server`)
 
@@ -257,7 +257,7 @@ Tests cover:
 - ✅ Client disconnection
 - ✅ Graceful shutdown
 
-**Coverage**: ~90%
+Test coverage is approximately 90%.
 
 ### Client Package (`internal/client`)
 
@@ -269,7 +269,7 @@ Tests cover:
 - ✅ Error handling (no connection)
 - ✅ Disconnection
 
-**Coverage**: ~85%
+Test coverage is approximately 85%.
 
 ### Integration Tests (`test/`)
 
@@ -450,9 +450,9 @@ Recommended CI checks:
 
 ## Best Practices
 
-### Do's ✅
+### What to Do
 
-- Write tests before implementation (TDD)
+- Write tests before implementation following TDD
 - Use table-driven tests for multiple scenarios
 - Test edge cases and error conditions
 - Use meaningful test names
@@ -460,14 +460,14 @@ Recommended CI checks:
 - Use `t.Helper()` for test helpers
 - Clean up resources with `defer`
 
-### Don'ts ❌
+### What to Avoid
 
-- Don't skip error checks in tests
-- Don't use fixed ports (use `:0`)
-- Don't share state between tests
-- Don't use `time.Sleep` for synchronization (use channels)
-- Don't test implementation details (test behavior)
-- Don't ignore flaky tests (fix them)
+- Skipping error checks in tests
+- Using fixed ports (use `:0` instead)
+- Sharing state between tests
+- Using `time.Sleep` for synchronization (use channels instead)
+- Testing implementation details (test behavior)
+- Ignoring flaky tests (fix them)
 
 ## Test Metrics
 
