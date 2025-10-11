@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/omochice/tcp-socket/internal/server"
-	"github.com/omochice/tcp-socket/pkg/protocol"
+	"github.com/omochice/toy-socket-chat/internal/server"
+	"github.com/omochice/toy-socket-chat/pkg/protocol"
 )
 
 func TestServer_Start(t *testing.T) {

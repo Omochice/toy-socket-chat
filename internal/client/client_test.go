@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/omochice/tcp-socket/internal/client"
+	"github.com/omochice/toy-socket-chat/internal/client"
 )
 
 // mockServer creates a simple mock TCP server for testing

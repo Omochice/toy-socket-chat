@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/omochice/tcp-socket/internal/client"
+	"github.com/omochice/toy-socket-chat/internal/client"
 )
 
 func main() {

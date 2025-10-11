@@ -3,7 +3,7 @@ package protocol_test
 import (
 	"testing"
 
-	"github.com/omochice/tcp-socket/pkg/protocol"
+	"github.com/omochice/toy-socket-chat/pkg/protocol"
 )
 
 func TestMessage_Encode(t *testing.T) {

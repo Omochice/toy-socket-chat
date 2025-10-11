@@ -185,7 +185,7 @@ go test -race ./...
 Understanding the project structure helps with contributions:
 
 ```
-tcp-socket/
+toy-socket-chat/
 ├── cmd/                    # Command-line applications
 │   ├── server/            # Server executable
 │   └── client/            # Client executable

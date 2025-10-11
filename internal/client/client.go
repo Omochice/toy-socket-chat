@@ -7,7 +7,7 @@ import (
 	"net"
 	"sync"
 
-	"github.com/omochice/tcp-socket/pkg/protocol"
+	"github.com/omochice/toy-socket-chat/pkg/protocol"
 )
 
 // Client represents a TCP chat client

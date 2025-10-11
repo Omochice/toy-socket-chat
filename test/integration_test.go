@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/omochice/tcp-socket/internal/client"
-	"github.com/omochice/tcp-socket/internal/server"
+	"github.com/omochice/toy-socket-chat/internal/client"
+	"github.com/omochice/toy-socket-chat/internal/server"
 )
 
 // TestIntegration_ServerClientCommunication tests end-to-end communication

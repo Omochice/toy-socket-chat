@@ -1,3 +1,3 @@
-module github.com/omochice/tcp-socket
+module github.com/omochice/toy-socket-chat
 
 go 1.25.2

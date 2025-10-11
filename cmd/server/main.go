@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/omochice/tcp-socket/internal/server"
+	"github.com/omochice/toy-socket-chat/internal/server"
 )
 
 func main() {
