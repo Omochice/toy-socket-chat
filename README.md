@@ -161,4 +161,4 @@ Interested in contributing? Check out [CONTRIBUTING.md](CONTRIBUTING.md) for dev
 
 ## License
 
-This project is open source and available under the MIT License.
+[zlib](./LICENSE)
