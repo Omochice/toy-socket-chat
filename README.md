@@ -1,18 +1,19 @@
 # TCP Socket Chat
 
-A TCP socket-based chat application built with Go using Test-Driven Development (TDD).
+A Toy TCP socket-based chat application built with Go.
 
 ## Overview
 
-This project is a simple chat system using TCP sockets. It includes two CLI tools (server and client) that allow multiple users to exchange messages in real-time.
+This project is a simple chat system using TCP sockets.
+It includes two CLI tools (server and client) that allow multiple users to exchange messages in real-time.
 
 ## Features
 
-- **TCP Socket Communication**: Direct communication using raw TCP sockets
-- **Multiple Client Support**: Multiple users can connect simultaneously
-- **Message Broadcasting**: Messages from one user are delivered to all others
-- **Join/Leave Notifications**: User join and leave events are notified to all participants
-- **Concurrent Processing**: Efficient concurrent processing using Goroutines
+- TCP Socket Communication: Direct communication using raw TCP sockets
+- Multiple Client Support: Multiple users can connect simultaneously
+- Message Broadcasting: Messages from one user are delivered to all others
+- Join/Leave Notifications: User join and leave events are notified to all participants
+- Concurrent Processing: Efficient concurrent processing using Goroutines
 
 ## Requirements
 
@@ -20,14 +21,7 @@ This project is a simple chat system using TCP sockets. It includes two CLI tool
 
 ## Installation
 
-### 1. Clone the Repository
-
-```bash
-git clone <repository-url>
-cd tcp-socket
-```
-
-### 2. Build
+### Build
 
 Build the server and client binaries:
 
@@ -88,6 +82,7 @@ Type your messages (or 'quit' to exit):
 ### Three-User Chat Example
 
 **Terminal 1: Starting the Server**
+
 ```bash
 $ ./bin/server -port :8080
 Starting server on :8080...
@@ -101,6 +96,7 @@ Message from carol: Hey guys!
 ```
 
 **Terminal 2: Connecting as alice**
+
 ```bash
 $ ./bin/client -server localhost:8080 -username alice
 Connected to localhost:8080 as alice
@@ -113,6 +109,7 @@ Hello everyone!
 ```
 
 **Terminal 3: Connecting as bob**
+
 ```bash
 $ ./bin/client -server localhost:8080 -username bob
 Connected to localhost:8080 as bob
@@ -124,6 +121,7 @@ Hi alice!
 ```
 
 **Terminal 4: Connecting as carol**
+
 ```bash
 $ ./bin/client -server localhost:8080 -username carol
 Connected to localhost:8080 as carol
@@ -132,77 +130,6 @@ Type your messages (or 'quit' to exit):
 [bob]: Hi alice!
 Hey guys!
 ```
-
-## Running Tests
-
-The project includes comprehensive tests:
-
-```bash
-# Run all tests
-go test ./...
-
-# Run with verbose output
-go test ./... -v
-
-# Run tests for specific packages
-go test ./pkg/protocol -v
-go test ./internal/server -v
-go test ./internal/client -v
-go test ./test -v
-```
-
-## Project Structure
-
-```
-tcp-socket/
-├── cmd/
-│   ├── server/          # Server CLI tool
-│   │   └── main.go
-│   └── client/          # Client CLI tool
-│       └── main.go
-├── internal/
-│   ├── server/          # Server implementation
-│   │   ├── server.go
-│   │   └── server_test.go
-│   └── client/          # Client implementation
-│       ├── client.go
-│       └── client_test.go
-├── pkg/
-│   └── protocol/        # Message protocol
-│       ├── message.go
-│       └── message_test.go
-├── test/
-│   └── integration_test.go  # Integration tests
-├── go.mod
-└── README.md
-```
-
-## Technical Details
-
-### Message Protocol
-
-Three types of messages:
-- **TEXT**: Regular chat messages
-- **JOIN**: User joined notification
-- **LEAVE**: User left notification
-
-Messages are encoded/decoded using Go's standard `encoding/gob` package.
-
-### Concurrency
-
-- Server handles each client in a separate goroutine
-- Client receives messages in a separate goroutine
-- All shared resources are protected by mutexes for thread safety
-
-## About TDD
-
-This project was developed using Test-Driven Development (TDD):
-
-1. **Red**: Write tests first (failing tests)
-2. **Green**: Write minimal implementation to pass tests
-3. **Refactor**: Improve the code
-
-The commit history shows that each feature was developed following the Red-Green cycle.
 
 ## Troubleshooting
 
@@ -222,6 +149,15 @@ Specify a different port number:
 - Verify that the server is running
 - Check if a firewall is blocking the port
 - Verify that the server address and port number are correct
+
+## Contributing
+
+Interested in contributing? Check out [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines and best practices.
+
+## Documentation
+
+- [Architecture](doc/architecture.md) - Technical details about the system design
+- [Testing Guide](doc/testing.md) - How to run and write tests
 
 ## License
 
