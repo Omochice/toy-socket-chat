@@ -120,8 +120,8 @@ go test ./... -timeout 30s
 Tests are organized by package:
 
 - **`pkg/protocol`**: Message encoding/decoding tests
-- **`internal/server`**: Server functionality tests
-- **`internal/client`**: Client functionality tests
+- **`internal/server`**: Server functionality tests (TCP and WebSocket)
+- **`internal/client`**: Client functionality tests (TCP and WebSocket)
 - **`test/`**: Integration tests
 
 ### Test File Naming
@@ -250,6 +250,8 @@ Test coverage is approximately 100%.
 ### Server Package (`internal/server`)
 
 Tests cover:
+
+**TCP Server (`server.go` and `server_test.go`):**
 - ✅ Server start/stop
 - ✅ Client connection handling
 - ✅ Message broadcasting
@@ -257,17 +259,38 @@ Tests cover:
 - ✅ Client disconnection
 - ✅ Graceful shutdown
 
+**WebSocket Server (`websocket.go` and `websocket_test.go`):**
+- ✅ Server start/stop
+- ✅ WebSocket upgrade handling
+- ✅ Client connection via WebSocket
+- ✅ Message broadcasting to WebSocket clients
+- ✅ Join/leave message handling
+- ✅ Multiple concurrent WebSocket connections
+
 Test coverage is approximately 90%.
 
 ### Client Package (`internal/client`)
 
 Tests cover:
+
+**TCP Client (`client.go` and `client_test.go`):**
 - ✅ Connection establishment
 - ✅ Message sending
 - ✅ Message receiving
 - ✅ Join/leave messages
 - ✅ Error handling (no connection)
 - ✅ Disconnection
+
+**WebSocket Client (`websocket.go` and `websocket_test.go`):**
+- ✅ Client creation
+- ✅ Connection to WebSocket server
+- ✅ Message sending via WebSocket
+- ✅ Message receiving via WebSocket
+- ✅ Join/leave messages
+- ✅ Error handling (not connected)
+- ✅ Disconnection safety (sync.Once pattern)
+- ✅ Reconnection scenarios
+- ✅ Concurrent send operations
 
 Test coverage is approximately 85%.
 
@@ -516,9 +539,130 @@ If tests fail with "address already in use":
 2. Ensure cleanup in `defer`
 3. Check for leaked server instances
 
+## WebSocket Testing
+
+### Testing WebSocket Connections
+
+WebSocket tests use the `gorilla/websocket` package for client connections:
+
+```go
+func TestWebSocketServer_ClientConnection(t *testing.T) {
+    srv := server.NewWebSocketServer(":0")
+    go srv.Start()
+    defer srv.Stop()
+
+    // Wait for server to start
+    time.Sleep(100 * time.Millisecond)
+
+    // Connect WebSocket client
+    addr := srv.Addr()
+    url := "ws://" + addr + "/ws"
+    conn, _, err := websocket.DefaultDialer.Dial(url, nil)
+    if err != nil {
+        t.Fatalf("Failed to connect: %v", err)
+    }
+    defer conn.Close()
+
+    // Verify connection
+    if count := srv.ClientCount(); count != 1 {
+        t.Errorf("Expected 1 client, got %d", count)
+    }
+}
+```
+
+### Testing WebSocket Message Broadcasting
+
+```go
+func TestWebSocketServer_MessageBroadcast(t *testing.T) {
+    srv := server.NewWebSocketServer(":0")
+    go srv.Start()
+    defer srv.Stop()
+
+    time.Sleep(100 * time.Millisecond)
+
+    addr := srv.Addr()
+    url := "ws://" + addr + "/ws"
+
+    // Connect two clients
+    conn1, _, _ := websocket.DefaultDialer.Dial(url, nil)
+    defer conn1.Close()
+    conn2, _, _ := websocket.DefaultDialer.Dial(url, nil)
+    defer conn2.Close()
+
+    // Send message from client 2
+    msg := protocol.Message{
+        Type:    protocol.MessageTypeText,
+        Sender:  "bob",
+        Content: "Hello!",
+    }
+    data, _ := msg.Encode()
+    conn2.WriteMessage(websocket.BinaryMessage, data)
+
+    // Client 1 should receive the message
+    conn1.SetReadDeadline(time.Now().Add(time.Second))
+    _, receivedData, err := conn1.ReadMessage()
+    if err != nil {
+        t.Fatalf("Failed to receive message: %v", err)
+    }
+
+    var receivedMsg protocol.Message
+    receivedMsg.Decode(receivedData)
+    if receivedMsg.Content != "Hello!" {
+        t.Errorf("Expected 'Hello!', got '%s'", receivedMsg.Content)
+    }
+}
+```
+
+### Testing WebSocket Client Disconnection Safety
+
+The WebSocket client uses `sync.Once` to ensure safe shutdown:
+
+```go
+func TestWebSocketClient_Reconnect(t *testing.T) {
+    client := client.NewWebSocketClient("ws://localhost:8080/ws", "alice")
+
+    // First disconnect (should not panic)
+    client.Disconnect()
+
+    // Try to connect (will fail without server)
+    err := client.Connect()
+    if err == nil {
+        t.Error("Expected connection error without server")
+    }
+
+    // Disconnect again (should not panic or cause issues)
+    client.Disconnect()
+}
+```
+
+### Key Testing Patterns for WebSocket
+
+1. **Use Port :0**
+   - Always use `:0` for test servers to avoid port conflicts
+   - Get actual address with `srv.Addr()`
+
+2. **Set Read Deadlines**
+   - Use `conn.SetReadDeadline()` to prevent test hangs
+   - Always have timeout for asynchronous operations
+
+3. **Test Binary Message Format**
+   - WebSocket supports both text and binary frames
+   - Use `websocket.BinaryMessage` for gob-encoded data
+
+4. **Test Connection Lifecycle**
+   - Test connect, send, receive, and disconnect
+   - Verify graceful shutdown
+   - Test multiple disconnect calls
+
+5. **Test Concurrent Operations**
+   - WebSocket clients should handle concurrent sends
+   - Use goroutines to test race conditions
+   - Run with `-race` flag
+
 ## Resources
 
 - [Go Testing Package](https://pkg.go.dev/testing)
 - [Table-Driven Tests](https://go.dev/wiki/TableDrivenTests)
 - [Go Testing Best Practices](https://go.dev/doc/code)
 - [Advanced Testing with Go](https://www.youtube.com/watch?v=8hQG7QlcLBk)
+- [Gorilla WebSocket Testing](https://pkg.go.dev/github.com/gorilla/websocket)
