@@ -10,8 +10,10 @@ It includes CLI tools (server and client) for both protocols, allowing multiple 
 ## Features
 
 - **Dual Protocol Support**: Both TCP sockets and WebSocket connections
+- **Unified Server**: Single server handling both TCP and WebSocket clients in the same chat room
 - **TCP Socket Communication**: Direct communication using raw TCP sockets
 - **WebSocket Communication**: Browser-compatible WebSocket protocol (RFC 6455)
+- **Cross-Protocol Messaging**: TCP clients can chat with WebSocket clients seamlessly
 - **Multiple Client Support**: Multiple users can connect simultaneously
 - **Message Broadcasting**: Messages from one user are delivered to all others
 - **Join/Leave Notifications**: User join and leave events are notified to all participants
@@ -35,6 +37,9 @@ go build -o bin/client ./cmd/client
 # Build WebSocket server and client
 go build -o bin/websocket-server ./cmd/websocket-server
 go build -o bin/websocket-client ./cmd/websocket-client
+
+# Build unified server (handles both TCP and WebSocket)
+go build -o bin/unified-server ./cmd/unified-server
 ```
 
 ## Usage
@@ -112,6 +117,47 @@ When the client connects, you'll see a message like this:
 Connected to ws://localhost:8080/ws as alice
 Type your messages (or 'quit' to exit):
 ```
+
+### Unified Server (Recommended)
+
+The unified server allows TCP and WebSocket clients to communicate with each other in the same chat room.
+
+#### Starting the Unified Server
+
+Start the unified server with both TCP and WebSocket support:
+
+```bash
+./bin/unified-server -tcp :8080 -ws :8081
+```
+
+Options:
+- `-tcp`: TCP port to listen on (default: `:8080`)
+- `-ws`: WebSocket port to listen on (default: `:8081`)
+
+When the server starts, you'll see messages like this:
+```
+Starting unified server...
+  TCP on :8080
+  WebSocket on :8081
+TCP server started on [::]:8080
+WebSocket server started on [::]:8081
+```
+
+#### Connecting Clients to Unified Server
+
+You can now connect both TCP and WebSocket clients to the same chat:
+
+**TCP Client:**
+```bash
+./bin/client -server localhost:8080 -username alice
+```
+
+**WebSocket Client:**
+```bash
+./bin/websocket-client -server ws://localhost:8081/ws -username bob
+```
+
+Both clients will be in the same chat room and can see each other's messages!
 
 ### How to Chat
 
@@ -208,6 +254,44 @@ Type your messages (or 'quit' to exit):
 Hi alice!
 ```
 
+### Cross-Protocol Chat Example (Unified Server)
+
+**Terminal 1: Starting the Unified Server**
+
+```bash
+$ ./bin/unified-server -tcp :8080 -ws :8081
+Starting unified server...
+  TCP on :8080
+  WebSocket on :8081
+TCP server started on [::]:8080
+WebSocket server started on [::]:8081
+TCP user alice joined
+WebSocket user bob joined
+Message from TCP user alice: Hello from TCP!
+Message from WebSocket user bob: Hello from WebSocket!
+```
+
+**Terminal 2: TCP Client (alice)**
+
+```bash
+$ ./bin/client -server localhost:8080 -username alice
+Connected to localhost:8080 as alice
+Type your messages (or 'quit' to exit):
+*** bob joined the chat ***
+Hello from TCP!
+[bob]: Hello from WebSocket!
+```
+
+**Terminal 3: WebSocket Client (bob)**
+
+```bash
+$ ./bin/websocket-client -server ws://localhost:8081/ws -username bob
+Connected to ws://localhost:8081/ws as bob
+Type your messages (or 'quit' to exit):
+[alice]: Hello from TCP!
+Hello from WebSocket!
+```
+
 ## Troubleshooting
 
 ### Port Already in Use
@@ -223,6 +307,9 @@ Specify a different port number:
 
 # For WebSocket server
 ./bin/websocket-server -port :9090
+
+# For unified server
+./bin/unified-server -tcp :9090 -ws :9091
 ```
 
 ### Cannot Connect to Server

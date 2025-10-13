@@ -568,6 +568,140 @@ Both implementations use similar concurrency patterns:
 - WaitGroup for graceful shutdown
 - Signal channels for coordination
 
+## Unified Server Implementation
+
+### UnifiedServer (`internal/server/unified.go`)
+
+The unified server combines both TCP and WebSocket protocols into a single server that manages all clients in one chat room.
+
+#### Core Components
+
+```go
+type UnifiedClient struct {
+    id         string           // Unique client ID
+    username   string           // User's name
+    outgoing   chan []byte      // Outgoing message queue
+    clientType string           // "tcp" or "websocket"
+}
+
+type UnifiedServer struct {
+    tcpAddress  string                      // TCP listen address
+    wsAddress   string                      // WebSocket listen address
+    tcpListener net.Listener                // TCP listener
+    wsListener  net.Listener                // WebSocket listener (for HTTP)
+    wsServer    *http.Server                // HTTP server for WebSocket
+    clients     map[*UnifiedClient]bool     // All connected clients
+    mu          sync.RWMutex                // Protects clients map
+    quit        chan struct{}               // Shutdown signal
+    wg          sync.WaitGroup              // Goroutine coordination
+}
+```
+
+#### Architecture Overview
+
+```
+┌─────────────┐         ┌─────────────┐
+│ TCP Client  │         │  WS Client  │
+│   (alice)   │         │    (bob)    │
+└──────┬──────┘         └──────┬──────┘
+       │                       │
+   TCP :8080              WS :8081/ws
+       │                       │
+       └───────┬───────────────┘
+               │
+       ┌───────▼────────┐
+       │ UnifiedServer  │
+       │                │
+       │  Shared Client │
+       │      Map       │
+       └────────────────┘
+            │     │
+         Broadcast
+            │     │
+       ┌────▼─────▼────┐
+       │  All Clients   │
+       │  (TCP + WS)    │
+       └────────────────┘
+```
+
+#### Key Design Decisions
+
+1. **Unified Client Abstraction**
+   - Both TCP and WebSocket clients are wrapped as `UnifiedClient`
+   - Same message queue mechanism for both types
+   - Protocol-agnostic broadcasting
+
+2. **Dual Listener Architecture**
+   - Separate listeners for TCP and WebSocket
+   - Different ports for each protocol
+   - Single shared client map
+
+3. **Cross-Protocol Communication**
+   - Messages encoded once using gob
+   - Same byte format sent to all clients
+   - TCP and WebSocket clients receive identical data
+
+#### Message Flow (Cross-Protocol)
+
+```
+TCP Client (alice) sends message
+    ↓
+handleTCPClient reads from TCP socket
+    ↓
+protocol.Message.Decode()
+    ↓
+broadcast(data, sender)
+    ↓
+For each client in clients map:
+    ├─ TCP Client (skip sender)
+    │   └─ Write to outgoing channel
+    │       └─ Writer goroutine → TCP socket
+    └─ WebSocket Client
+        └─ Write to outgoing channel
+            └─ Writer goroutine → WebSocket conn
+```
+
+#### Concurrency Model
+
+The unified server maintains:
+- **One accept goroutine for TCP**: Continuously accepts TCP connections
+- **One HTTP server for WebSocket**: Handles WebSocket upgrades
+- **Two goroutines per client**:
+  - Reader: Reads from connection (TCP socket or WebSocket)
+  - Writer: Writes from outgoing channel to connection
+
+All clients share:
+- Single `clients` map protected by `sync.RWMutex`
+- Common `broadcast()` function
+- Same message protocol
+
+#### Advantages
+
+1. **Single Chat Room**: All users in one place regardless of protocol
+2. **Code Reuse**: Broadcast logic shared between protocols
+3. **Flexibility**: Easy to add more protocols
+4. **Simple Architecture**: One server instead of separate servers
+
+#### Limitations
+
+1. **Port Requirements**: Need two different ports (TCP and WebSocket)
+2. **Memory Overhead**: All clients in single process
+3. **Single Point of Failure**: If server crashes, all clients disconnect
+
+### Choosing Server Type
+
+**Use Unified Server when:**
+- Want TCP and WebSocket clients to communicate
+- Running a small to medium-sized chat
+- Simplicity is important
+- Don't mind using two ports
+
+**Use Separate Servers when:**
+- Need protocol isolation
+- Want to scale TCP and WebSocket independently
+- Different security policies per protocol
+- Running distributed architecture
+
 ## References
 
 - Go Concurrency Patterns: https://go.dev/blog/pipelines
