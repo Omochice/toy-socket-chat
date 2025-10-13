@@ -42,28 +42,27 @@ go build -o bin/websocket-client ./cmd/websocket-client
 
 ### Starting the Server
 
-The server runs in unified mode, handling both TCP and WebSocket clients in the same chat room.
+The server runs in unified mode on a single port, handling both TCP and WebSocket clients in the same chat room.
 
 ```bash
-./bin/server -tcp :8080 -ws :8081
+./bin/server -port :8080
 ```
 
 **Options:**
-- `-tcp`: TCP port to listen on (default: `:8080`)
-- `-ws`: WebSocket port to listen on (default: `:8081`)
+- `-port`: Port to listen on for both protocols (default: `:8080`)
+
+The server automatically detects whether incoming connections are raw TCP or WebSocket (HTTP) by inspecting the first few bytes.
 
 When the server starts, you'll see messages like this:
 ```
-Starting unified server...
-  TCP on :8080
-  WebSocket on :8081
-TCP server started on [::]:8080
-WebSocket server started on [::]:8081
+Starting unified server on :8080...
+  Accepting both TCP socket and WebSocket connections
+Unified server started on [::]:8080 (TCP and WebSocket)
 ```
 
 ### Connecting Clients
 
-You can connect both TCP and WebSocket clients to the same chat room.
+You can connect both TCP and WebSocket clients to the same port.
 
 #### TCP Client
 
@@ -84,7 +83,7 @@ Type your messages (or 'quit' to exit):
 #### WebSocket Client
 
 ```bash
-./bin/websocket-client -server ws://localhost:8081/ws -username bob
+./bin/websocket-client -server ws://localhost:8080/ws -username bob
 ```
 
 **Options:**
@@ -93,11 +92,11 @@ Type your messages (or 'quit' to exit):
 
 When the client connects, you'll see:
 ```
-Connected to ws://localhost:8081/ws as bob
+Connected to ws://localhost:8080/ws as bob
 Type your messages (or 'quit' to exit):
 ```
 
-Both TCP and WebSocket clients are in the same chat room and can see each other's messages!
+**Note:** Both clients connect to the **same port** (8080). The server automatically detects the protocol by inspecting the connection headers.
 
 ### How to Chat
 
@@ -113,12 +112,10 @@ Both TCP and WebSocket clients are in the same chat room and can see each other'
 **Terminal 1: Starting the Server**
 
 ```bash
-$ ./bin/server -tcp :8080 -ws :8081
-Starting unified server...
-  TCP on :8080
-  WebSocket on :8081
-TCP server started on [::]:8080
-WebSocket server started on [::]:8081
+$ ./bin/server -port :8080
+Starting unified server on :8080...
+  Accepting both TCP socket and WebSocket connections
+Unified server started on [::]:8080 (TCP and WebSocket)
 TCP user alice joined
 WebSocket user bob joined
 Message from TCP user alice: Hello from TCP!
@@ -139,8 +136,8 @@ Hello from TCP!
 **Terminal 3: WebSocket Client (bob)**
 
 ```bash
-$ ./bin/websocket-client -server ws://localhost:8081/ws -username bob
-Connected to ws://localhost:8081/ws as bob
+$ ./bin/websocket-client -server ws://localhost:8080/ws -username bob
+Connected to ws://localhost:8080/ws as bob
 Type your messages (or 'quit' to exit):
 [alice]: Hello from TCP!
 Hello from WebSocket!
@@ -154,9 +151,9 @@ Hello from WebSocket!
 Failed to start server: listen tcp :8080: bind: address already in use
 ```
 
-Specify different port numbers:
+Specify a different port:
 ```bash
-./bin/server -tcp :9090 -ws :9091
+./bin/server -port :9090
 ```
 
 ### Cannot Connect to Server

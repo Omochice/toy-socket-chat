@@ -12,12 +12,11 @@ import (
 
 func main() {
 	// Parse command-line flags
-	tcpPort := flag.String("tcp", ":8080", "TCP port to listen on (e.g., :8080)")
-	wsPort := flag.String("ws", ":8081", "WebSocket port to listen on (e.g., :8081)")
+	port := flag.String("port", ":8080", "Port to listen on for both TCP and WebSocket (e.g., :8080)")
 	flag.Parse()
 
-	// Create and start unified server
-	srv := server.NewUnifiedServer(*tcpPort, *wsPort)
+	// Create and start unified server on single port
+	srv := server.NewUnifiedServer(*port, "")
 
 	// Handle graceful shutdown
 	sigChan := make(chan os.Signal, 1)
@@ -25,9 +24,8 @@ func main() {
 
 	errChan := make(chan error, 1)
 	go func() {
-		log.Printf("Starting unified server...")
-		log.Printf("  TCP on %s", *tcpPort)
-		log.Printf("  WebSocket on %s", *wsPort)
+		log.Printf("Starting unified server on %s...", *port)
+		log.Printf("  Accepting both TCP socket and WebSocket connections")
 		errChan <- srv.Start()
 	}()
 

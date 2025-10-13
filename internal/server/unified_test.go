@@ -333,3 +333,115 @@ func TestUnifiedServer_WebSocketToTCP(t *testing.T) {
 		t.Errorf("Expected 'Message from WebSocket', got '%s'", received.Content)
 	}
 }
+
+func TestUnifiedServer_SinglePort(t *testing.T) {
+	srv := NewUnifiedServer(":0", "")
+	go srv.Start()
+	defer srv.Stop()
+
+	time.Sleep(200 * time.Millisecond)
+
+	addr := srv.Addr()
+	if addr == "" {
+		t.Fatal("Server address is empty")
+	}
+
+	// Connect TCP client
+	tcpConn, err := net.Dial("tcp", addr)
+	if err != nil {
+		t.Fatalf("Failed to connect TCP client: %v", err)
+	}
+	defer tcpConn.Close()
+
+	// Send join message from TCP client
+	joinMsg := protocol.Message{
+		Type:   protocol.MessageTypeJoin,
+		Sender: "tcp-user",
+	}
+	joinData, _ := joinMsg.Encode()
+	tcpConn.Write(joinData)
+
+	time.Sleep(100 * time.Millisecond)
+
+	// Connect WebSocket client to the same port
+	wsURL := "ws://" + addr + "/ws"
+	wsConn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	if err != nil {
+		t.Fatalf("Failed to connect WebSocket client: %v", err)
+	}
+	defer wsConn.Close()
+
+	// Send join message from WebSocket client
+	wsJoin := protocol.Message{
+		Type:   protocol.MessageTypeJoin,
+		Sender: "ws-user",
+	}
+	wsJoinData, _ := wsJoin.Encode()
+	wsConn.WriteMessage(websocket.BinaryMessage, wsJoinData)
+
+	// TCP should receive the join notification
+	buf := make([]byte, 4096)
+	tcpConn.SetReadDeadline(time.Now().Add(time.Second))
+	n, err := tcpConn.Read(buf)
+	if err != nil {
+		t.Fatalf("TCP failed to receive join: %v", err)
+	}
+	var joinReceived protocol.Message
+	joinReceived.Decode(buf[:n])
+	if joinReceived.Type != protocol.MessageTypeJoin || joinReceived.Sender != "ws-user" {
+		t.Logf("Received join: type=%v, sender=%s", joinReceived.Type, joinReceived.Sender)
+	}
+
+	time.Sleep(100 * time.Millisecond)
+
+	// Check client count (should have both clients)
+	if count := srv.ClientCount(); count != 2 {
+		t.Errorf("Expected 2 clients, got %d", count)
+	}
+
+	// Send message from TCP to WebSocket
+	textMsg := protocol.Message{
+		Type:    protocol.MessageTypeText,
+		Sender:  "tcp-user",
+		Content: "Hello from TCP!",
+	}
+	textData, _ := textMsg.Encode()
+	tcpConn.Write(textData)
+
+	// WebSocket should receive it
+	wsConn.SetReadDeadline(time.Now().Add(time.Second))
+	_, wsData, err := wsConn.ReadMessage()
+	if err != nil {
+		t.Fatalf("WebSocket failed to receive: %v", err)
+	}
+
+	var wsReceived protocol.Message
+	wsReceived.Decode(wsData)
+	if wsReceived.Content != "Hello from TCP!" {
+		t.Errorf("Expected 'Hello from TCP!', got '%s'", wsReceived.Content)
+	}
+
+	// Send message from WebSocket to TCP
+	wsMsg := protocol.Message{
+		Type:    protocol.MessageTypeText,
+		Sender:  "ws-user",
+		Content: "Hello from WebSocket!",
+	}
+	wsMsgData, _ := wsMsg.Encode()
+	wsConn.WriteMessage(websocket.BinaryMessage, wsMsgData)
+
+	// TCP should receive it
+	tcpConn.SetReadDeadline(time.Now().Add(2 * time.Second))
+	n, err = tcpConn.Read(buf)
+	if err != nil {
+		t.Fatalf("TCP failed to receive: %v", err)
+	}
+
+	var tcpReceived protocol.Message
+	if err := tcpReceived.Decode(buf[:n]); err != nil {
+		t.Fatalf("Failed to decode: %v", err)
+	}
+	if tcpReceived.Content != "Hello from WebSocket!" {
+		t.Errorf("Expected 'Hello from WebSocket!', got '%s'", tcpReceived.Content)
+	}
+}
