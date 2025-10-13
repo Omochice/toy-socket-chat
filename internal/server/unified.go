@@ -14,6 +14,12 @@ import (
 	"github.com/omochice/toy-socket-chat/pkg/protocol"
 )
 
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true // Allow all origins for simplicity
+	},
+}
+
 type UnifiedClient struct {
 	id         string
 	username   string
