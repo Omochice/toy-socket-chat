@@ -1,14 +1,14 @@
 # Architecture
 
-This document describes the technical architecture of the TCP Socket Chat system.
+This document describes the technical architecture of the Socket Chat system, which supports both TCP and WebSocket protocols.
 
 ## Overview
 
 The system consists of three main components:
 
 1. **Message Protocol** (`pkg/protocol`) - Defines message format and encoding
-2. **Server** (`internal/server`) - Manages connections and broadcasts messages
-3. **Client** (`internal/client`) - Connects to server and handles user interaction
+2. **Server** (`internal/server`) - Manages connections and broadcasts messages (TCP and WebSocket)
+3. **Client** (`internal/client`) - Connects to server and handles user interaction (TCP and WebSocket)
 
 ## System Architecture
 
@@ -401,8 +401,177 @@ See "Encoding" section above for detailed rationale.
 6. Rate limiting
 7. Message acknowledgments
 
+## WebSocket Implementation
+
+### WebSocket Server (`internal/server/websocket.go`)
+
+The WebSocket server provides the same chat functionality as the TCP server but uses the WebSocket protocol.
+
+#### Core Components
+
+```go
+type WebSocketServer struct {
+    address  string                     // Listen address (e.g., ":8080")
+    listener net.Listener               // TCP listener for HTTP server
+    server   *http.Server               // HTTP server for WebSocket upgrade
+    clients  map[*WebSocketClient]bool  // Connected WebSocket clients
+    mu       sync.RWMutex               // Protects clients map
+    quit     chan struct{}              // Shutdown signal
+    wg       sync.WaitGroup             // Goroutine coordination
+}
+
+type WebSocketClient struct {
+    conn     *websocket.Conn   // WebSocket connection
+    username string             // User's name
+    outgoing chan []byte        // Outgoing message queue
+}
+```
+
+#### WebSocket Upgrade Flow
+
+```
+HTTP Request → WebSocket Upgrade Handler → Upgraded Connection
+    ↓
+gorilla/websocket.Upgrader.Upgrade()
+    ↓
+WebSocket connection established
+    ↓
+Start client handling goroutines
+```
+
+#### Key Differences from TCP Implementation
+
+1. **Protocol Layer**
+   - TCP: Direct socket communication
+   - WebSocket: HTTP upgrade + framed messages
+
+2. **Connection Establishment**
+   - TCP: `net.Listen()` and `listener.Accept()`
+   - WebSocket: HTTP server with upgrade handler
+
+3. **Message Framing**
+   - TCP: Custom framing with gob encoding
+   - WebSocket: Built-in frame protocol (binary/text frames)
+
+4. **Browser Compatibility**
+   - TCP: Server-to-server only
+   - WebSocket: Works in web browsers
+
+### WebSocket Client (`internal/client/websocket.go`)
+
+The WebSocket client connects using the `ws://` URL scheme.
+
+#### Core Components
+
+```go
+type WebSocketClient struct {
+    address    string                   // WebSocket URL (e.g., "ws://localhost:8080/ws")
+    username   string                   // User's name
+    conn       *websocket.Conn          // WebSocket connection
+    messages   chan protocol.Message    // Incoming messages
+    mu         sync.RWMutex             // Protects conn
+    done       chan struct{}            // Shutdown signal
+    doneOnce   sync.Once                // Ensures done is closed only once
+    wg         sync.WaitGroup           // Goroutine coordination
+    isShutdown bool                     // Tracks shutdown state
+}
+```
+
+#### Connection Flow
+
+```
+WebSocketClient.Connect()
+    ↓
+websocket.DefaultDialer.Dial(ws://...)
+    ↓
+WebSocket handshake
+    ↓
+Connection established
+    ↓
+Start receiver goroutine
+```
+
+#### Shutdown Safety
+
+The WebSocket client uses `sync.Once` and `isShutdown` flag to prevent:
+- Closing the `done` channel multiple times
+- Concurrent shutdown operations
+- Panic on closed channel
+
+```go
+func (c *WebSocketClient) Disconnect() {
+    c.mu.Lock()
+    if c.isShutdown {
+        c.mu.Unlock()
+        return
+    }
+    c.isShutdown = true
+    // ... cleanup
+    c.mu.Unlock()
+
+    c.doneOnce.Do(func() {
+        close(c.done)
+    })
+    c.wg.Wait()
+}
+```
+
+### Protocol Compatibility
+
+Both TCP and WebSocket implementations use the same message protocol (`pkg/protocol`):
+
+```go
+type Message struct {
+    Type    MessageType  // TEXT, JOIN, LEAVE
+    Sender  string       // Username
+    Content string       // Message content
+}
+```
+
+This means:
+- Same message encoding (gob)
+- Same message types
+- Consistent behavior across protocols
+- Easy to add more transport protocols
+
+### Choosing Between TCP and WebSocket
+
+**Use TCP when:**
+- Building server-to-server communication
+- Need lowest latency
+- Want simplest implementation
+- No browser support required
+
+**Use WebSocket when:**
+- Need browser compatibility
+- Building web applications
+- Want standard protocol (RFC 6455)
+- Need firewall-friendly communication
+
+### Concurrency Model Comparison
+
+Both implementations use similar concurrency patterns:
+
+**TCP Server:**
+- One goroutine per client (reader)
+- One goroutine per client (writer)
+- Main goroutine accepts connections
+
+**WebSocket Server:**
+- One goroutine per client (reader)
+- One goroutine per client (writer)
+- HTTP server handles connections
+
+**Shared Characteristics:**
+- Buffered channels for message queuing
+- RWMutex for client map protection
+- WaitGroup for graceful shutdown
+- Signal channels for coordination
+
 ## References
 
 - Go Concurrency Patterns: https://go.dev/blog/pipelines
 - Effective Go: https://go.dev/doc/effective_go
 - TCP Socket Programming: https://pkg.go.dev/net
+- WebSocket Protocol (RFC 6455): https://tools.ietf.org/html/rfc6455
+- Gorilla WebSocket: https://github.com/gorilla/websocket
