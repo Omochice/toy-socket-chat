@@ -216,8 +216,9 @@ func (s *UnifiedServer) handleConnection(conn net.Conn) {
 // handleHTTPConnection handles HTTP connections (WebSocket upgrades)
 func (s *UnifiedServer) handleHTTPConnection(conn net.Conn, reader *bufio.Reader) {
 	// Create an HTTP server to handle the WebSocket upgrade
+	// Handle all paths for single-port mode
 	mux := http.NewServeMux()
-	mux.HandleFunc("/ws", s.handleWebSocket)
+	mux.HandleFunc("/", s.handleWebSocket)
 
 	// Wrap the connection with the buffered reader
 	bufConn := &bufferedConn{

@@ -363,8 +363,8 @@ func TestUnifiedServer_SinglePort(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond)
 
-	// Connect WebSocket client to the same port
-	wsURL := "ws://" + addr + "/ws"
+	// Connect WebSocket client to the same port (no /ws path)
+	wsURL := "ws://" + addr
 	wsConn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	if err != nil {
 		t.Fatalf("Failed to connect WebSocket client: %v", err)

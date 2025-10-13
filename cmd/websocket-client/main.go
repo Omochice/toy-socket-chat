@@ -13,7 +13,7 @@ import (
 
 func main() {
 	// Parse command-line flags
-	serverAddr := flag.String("server", "ws://localhost:8080/ws", "WebSocket server address (e.g., ws://localhost:8080/ws)")
+	serverAddr := flag.String("server", "ws://localhost:8080", "WebSocket server address (e.g., ws://localhost:8080)")
 	username := flag.String("username", "", "Username for chat")
 	flag.Parse()
 

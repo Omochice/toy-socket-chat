@@ -83,20 +83,20 @@ Type your messages (or 'quit' to exit):
 #### WebSocket Client
 
 ```bash
-./bin/websocket-client -server ws://localhost:8080/ws -username bob
+./bin/websocket-client -server ws://localhost:8080 -username bob
 ```
 
 **Options:**
-- `-server`: WebSocket server URL (default: `ws://localhost:8080/ws`)
+- `-server`: WebSocket server URL (default: `ws://localhost:8080`)
 - `-username`: Username to display in chat (required)
 
 When the client connects, you'll see:
 ```
-Connected to ws://localhost:8080/ws as bob
+Connected to ws://localhost:8080 as bob
 Type your messages (or 'quit' to exit):
 ```
 
-**Note:** Both clients connect to the **same port** (8080). The server automatically detects the protocol by inspecting the connection headers.
+**Note:** Both clients connect to the **same endpoint** (`localhost:8080`). The server automatically detects the protocol by inspecting the connection headers. No path like `/ws` is needed.
 
 ### How to Chat
 
@@ -136,8 +136,8 @@ Hello from TCP!
 **Terminal 3: WebSocket Client (bob)**
 
 ```bash
-$ ./bin/websocket-client -server ws://localhost:8080/ws -username bob
-Connected to ws://localhost:8080/ws as bob
+$ ./bin/websocket-client -server ws://localhost:8080 -username bob
+Connected to ws://localhost:8080 as bob
 Type your messages (or 'quit' to exit):
 [alice]: Hello from TCP!
 Hello from WebSocket!
