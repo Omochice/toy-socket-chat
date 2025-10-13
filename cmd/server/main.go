@@ -11,14 +11,11 @@ import (
 )
 
 func main() {
-	// Parse command-line flags
 	port := flag.String("port", ":8080", "Port to listen on for both TCP and WebSocket (e.g., :8080)")
 	flag.Parse()
 
-	// Create and start unified server on single port
 	srv := server.NewUnifiedServer(*port, "")
 
-	// Handle graceful shutdown
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
@@ -29,7 +26,6 @@ func main() {
 		errChan <- srv.Start()
 	}()
 
-	// Wait for either error or shutdown signal
 	select {
 	case err := <-errChan:
 		if err != nil {

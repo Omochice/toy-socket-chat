@@ -12,7 +12,6 @@ import (
 )
 
 func main() {
-	// Parse command-line flags
 	serverAddr := flag.String("server", "ws://localhost:8080", "WebSocket server address (e.g., ws://localhost:8080)")
 	username := flag.String("username", "", "Username for chat")
 	flag.Parse()
@@ -21,10 +20,8 @@ func main() {
 		log.Fatal("Username is required. Use -username flag")
 	}
 
-	// Create WebSocket client
 	c := client.NewWebSocketClient(*serverAddr, *username)
 
-	// Connect to server
 	if err := c.Connect(); err != nil {
 		log.Fatalf("Failed to connect to server: %v", err)
 	}
@@ -32,26 +29,23 @@ func main() {
 
 	log.Printf("Connected to %s as %s", *serverAddr, *username)
 
-	// Send join message
 	if err := c.Join(); err != nil {
 		log.Fatalf("Failed to join chat: %v", err)
 	}
 
-	// Start goroutine to receive and display messages
 	go func() {
 		for msg := range c.Messages() {
 			switch msg.Type {
-			case 0: // MessageTypeText
+			case 0:
 				fmt.Printf("[%s]: %s\n", msg.Sender, msg.Content)
-			case 1: // MessageTypeJoin
+			case 1:
 				fmt.Printf("*** %s joined the chat ***\n", msg.Sender)
-			case 2: // MessageTypeLeave
+			case 2:
 				fmt.Printf("*** %s left the chat ***\n", msg.Sender)
 			}
 		}
 	}()
 
-	// Read from stdin and send messages
 	fmt.Println("Type your messages (or 'quit' to exit):")
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
@@ -73,7 +67,6 @@ func main() {
 		log.Printf("Error reading input: %v", err)
 	}
 
-	// Send leave message before disconnecting
 	if err := c.Leave(); err != nil {
 		log.Printf("Failed to send leave message: %v", err)
 	}

@@ -14,15 +14,13 @@ import (
 	"github.com/omochice/toy-socket-chat/pkg/protocol"
 )
 
-// UnifiedClient represents a generic client (TCP or WebSocket)
 type UnifiedClient struct {
-	id       string
-	username string
-	outgoing chan []byte
-	clientType string // "tcp" or "websocket"
+	id         string
+	username   string
+	outgoing   chan []byte
+	clientType string
 }
 
-// UnifiedServer represents a server that handles both TCP and WebSocket connections
 type UnifiedServer struct {
 	address     string
 	tcpAddress  string
@@ -38,8 +36,8 @@ type UnifiedServer struct {
 	singlePort  bool
 }
 
-// NewUnifiedServer creates a new UnifiedServer instance
-// If wsAddress is empty, both TCP and WebSocket will be handled on tcpAddress
+// NewUnifiedServer creates a unified server. When wsAddress is empty,
+// single-port mode is used to avoid binding two separate ports.
 func NewUnifiedServer(tcpAddress, wsAddress string) *UnifiedServer {
 	singlePort := wsAddress == ""
 	return &UnifiedServer{
@@ -52,10 +50,8 @@ func NewUnifiedServer(tcpAddress, wsAddress string) *UnifiedServer {
 	}
 }
 
-// Start starts both TCP and WebSocket servers
 func (s *UnifiedServer) Start() error {
 	if s.singlePort {
-		// Single port mode: handle both protocols on one port
 		listener, err := net.Listen("tcp", s.address)
 		if err != nil {
 			return fmt.Errorf("failed to start server: %w", err)
@@ -66,7 +62,6 @@ func (s *UnifiedServer) Start() error {
 		s.wg.Add(1)
 		go s.acceptConnections()
 	} else {
-		// Dual port mode: separate ports for TCP and WebSocket
 		tcpListener, err := net.Listen("tcp", s.tcpAddress)
 		if err != nil {
 			return fmt.Errorf("failed to start TCP server: %w", err)
@@ -100,12 +95,10 @@ func (s *UnifiedServer) Start() error {
 		}()
 	}
 
-	// Wait for shutdown signal
 	<-s.quit
 	return fmt.Errorf("Server stopped")
 }
 
-// Stop stops the unified server
 func (s *UnifiedServer) Stop() {
 	close(s.quit)
 
@@ -119,11 +112,9 @@ func (s *UnifiedServer) Stop() {
 		s.wsServer.Close()
 	}
 
-	// Don't close client channels here - they will be closed by handleClient functions
 	s.wg.Wait()
 }
 
-// Addr returns the server's listening address (for single port mode)
 func (s *UnifiedServer) Addr() string {
 	if s.listener != nil {
 		return s.listener.Addr().String()
@@ -131,7 +122,6 @@ func (s *UnifiedServer) Addr() string {
 	return ""
 }
 
-// TCPAddr returns the TCP server's listening address
 func (s *UnifiedServer) TCPAddr() string {
 	if s.tcpListener != nil {
 		return s.tcpListener.Addr().String()
@@ -139,7 +129,6 @@ func (s *UnifiedServer) TCPAddr() string {
 	return ""
 }
 
-// WSAddr returns the WebSocket server's listening address
 func (s *UnifiedServer) WSAddr() string {
 	if s.wsListener != nil {
 		return s.wsListener.Addr().String()
@@ -147,14 +136,12 @@ func (s *UnifiedServer) WSAddr() string {
 	return ""
 }
 
-// ClientCount returns the number of connected clients
 func (s *UnifiedServer) ClientCount() int {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return len(s.clients)
 }
 
-// acceptConnections accepts connections on single port and determines protocol
 func (s *UnifiedServer) acceptConnections() {
 	defer s.wg.Done()
 
@@ -180,11 +167,10 @@ func (s *UnifiedServer) acceptConnections() {
 	}
 }
 
-// handleConnection determines whether the connection is HTTP (WebSocket) or TCP
 func (s *UnifiedServer) handleConnection(conn net.Conn) {
 	defer s.wg.Done()
 
-	// Peek at the first few bytes to determine protocol
+	// Must peek to avoid consuming data needed by the actual handler
 	reader := bufio.NewReader(conn)
 	prefix, err := reader.Peek(4)
 	if err != nil {
@@ -193,34 +179,27 @@ func (s *UnifiedServer) handleConnection(conn net.Conn) {
 		return
 	}
 
-	// Check if it's an HTTP request (WebSocket)
-	// HTTP requests start with methods like "GET ", "POST", "PUT ", "HEAD", etc.
 	isHTTP := bytes.HasPrefix(prefix, []byte("GET ")) ||
 		bytes.HasPrefix(prefix, []byte("POST")) ||
 		bytes.HasPrefix(prefix, []byte("PUT ")) ||
 		bytes.HasPrefix(prefix, []byte("HEAD")) ||
-		bytes.HasPrefix(prefix, []byte("OPTI")) || // OPTIONS
-		bytes.HasPrefix(prefix, []byte("PATC")) || // PATCH
-		bytes.HasPrefix(prefix, []byte("DELE")) || // DELETE
-		bytes.HasPrefix(prefix, []byte("CONN"))    // CONNECT
+		bytes.HasPrefix(prefix, []byte("OPTI")) ||
+		bytes.HasPrefix(prefix, []byte("PATC")) ||
+		bytes.HasPrefix(prefix, []byte("DELE")) ||
+		bytes.HasPrefix(prefix, []byte("CONN"))
 
 	if isHTTP {
-		// Handle as WebSocket (HTTP upgrade)
 		s.handleHTTPConnection(conn, reader)
 	} else {
-		// Handle as raw TCP client
 		s.handleRawTCPConnection(conn, reader)
 	}
 }
 
-// handleHTTPConnection handles HTTP connections (WebSocket upgrades)
 func (s *UnifiedServer) handleHTTPConnection(conn net.Conn, reader *bufio.Reader) {
-	// Create an HTTP server to handle the WebSocket upgrade
-	// Handle all paths for single-port mode
+	// Use "/" to accept WebSocket on any path in single-port mode
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", s.handleWebSocket)
 
-	// Wrap the connection with the buffered reader
 	bufConn := &bufferedConn{
 		Conn:   conn,
 		reader: reader,
@@ -230,7 +209,6 @@ func (s *UnifiedServer) handleHTTPConnection(conn net.Conn, reader *bufio.Reader
 	httpServer.Serve(&singleConnListener{conn: bufConn})
 }
 
-// handleRawTCPConnection handles raw TCP client connections
 func (s *UnifiedServer) handleRawTCPConnection(conn net.Conn, reader *bufio.Reader) {
 	client := &UnifiedClient{
 		id:         fmt.Sprintf("tcp-%p", conn),
@@ -246,7 +224,7 @@ func (s *UnifiedServer) handleRawTCPConnection(conn net.Conn, reader *bufio.Read
 	go s.handleTCPClientWithReader(client, conn, reader)
 }
 
-// bufferedConn wraps a net.Conn with a bufio.Reader to preserve peeked data
+// bufferedConn preserves peeked data by wrapping the reader
 type bufferedConn struct {
 	net.Conn
 	reader *bufio.Reader
@@ -256,7 +234,7 @@ func (bc *bufferedConn) Read(p []byte) (int, error) {
 	return bc.reader.Read(p)
 }
 
-// singleConnListener is a net.Listener that returns a single connection
+// singleConnListener allows http.Server.Serve to accept exactly one connection
 type singleConnListener struct {
 	conn net.Conn
 	once sync.Once
@@ -281,7 +259,6 @@ func (l *singleConnListener) Addr() net.Addr {
 	return l.conn.LocalAddr()
 }
 
-// acceptTCPConnections accepts TCP connections
 func (s *UnifiedServer) acceptTCPConnections() {
 	defer s.wg.Done()
 
@@ -317,7 +294,6 @@ func (s *UnifiedServer) acceptTCPConnections() {
 	}
 }
 
-// handleTCPClient handles a TCP client connection
 func (s *UnifiedServer) handleTCPClient(client *UnifiedClient, conn net.Conn) {
 	defer s.wg.Done()
 	defer conn.Close()
@@ -327,7 +303,6 @@ func (s *UnifiedServer) handleTCPClient(client *UnifiedClient, conn net.Conn) {
 		s.mu.Unlock()
 	}()
 
-	// Start writer goroutine
 	writerDone := make(chan struct{})
 	go func() {
 		for data := range client.outgoing {
@@ -344,7 +319,6 @@ func (s *UnifiedServer) handleTCPClient(client *UnifiedClient, conn net.Conn) {
 		<-writerDone
 	}()
 
-	// Read messages from client
 	buf := make([]byte, 4096)
 	for {
 		n, err := conn.Read(buf)
@@ -379,7 +353,6 @@ func (s *UnifiedServer) handleTCPClient(client *UnifiedClient, conn net.Conn) {
 	}
 }
 
-// handleTCPClientWithReader handles a TCP client connection with a buffered reader
 func (s *UnifiedServer) handleTCPClientWithReader(client *UnifiedClient, conn net.Conn, reader *bufio.Reader) {
 	defer s.wg.Done()
 	defer conn.Close()
@@ -389,12 +362,10 @@ func (s *UnifiedServer) handleTCPClientWithReader(client *UnifiedClient, conn ne
 		s.mu.Unlock()
 	}()
 
-	// Start writer goroutine (write directly to the underlying connection)
 	writerDone := make(chan struct{})
 	go func() {
 		defer close(writerDone)
 		for data := range client.outgoing {
-			// Write directly to the underlying connection, not through the reader
 			if rawConn, ok := conn.(interface{ Write([]byte) (int, error) }); ok {
 				if _, err := rawConn.Write(data); err != nil {
 					log.Printf("Failed to send message to TCP client: %v", err)
@@ -409,7 +380,6 @@ func (s *UnifiedServer) handleTCPClientWithReader(client *UnifiedClient, conn ne
 		<-writerDone
 	}()
 
-	// Read messages from client using buffered reader
 	buf := make([]byte, 4096)
 	for {
 		n, err := reader.Read(buf)
@@ -444,7 +414,6 @@ func (s *UnifiedServer) handleTCPClientWithReader(client *UnifiedClient, conn ne
 	}
 }
 
-// handleWebSocket handles WebSocket upgrade and client connections
 func (s *UnifiedServer) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -466,7 +435,6 @@ func (s *UnifiedServer) handleWebSocket(w http.ResponseWriter, r *http.Request) 
 	go s.handleWebSocketClient(client, conn)
 }
 
-// handleWebSocketClient handles a WebSocket client connection
 func (s *UnifiedServer) handleWebSocketClient(client *UnifiedClient, conn *websocket.Conn) {
 	defer s.wg.Done()
 	defer conn.Close()
@@ -476,7 +444,6 @@ func (s *UnifiedServer) handleWebSocketClient(client *UnifiedClient, conn *webso
 		s.mu.Unlock()
 	}()
 
-	// Start writer goroutine
 	writerDone := make(chan struct{})
 	go func() {
 		for data := range client.outgoing {
@@ -493,7 +460,6 @@ func (s *UnifiedServer) handleWebSocketClient(client *UnifiedClient, conn *webso
 		<-writerDone
 	}()
 
-	// Read messages from client
 	for {
 		messageType, data, err := conn.ReadMessage()
 		if err != nil {
@@ -527,7 +493,6 @@ func (s *UnifiedServer) handleWebSocketClient(client *UnifiedClient, conn *webso
 	}
 }
 
-// broadcast sends a message to all clients except the sender
 func (s *UnifiedServer) broadcast(data []byte, sender *UnifiedClient) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
