@@ -1,0 +1,37 @@
+walk = "git"
+
+[formatter.biome]
+command = "biome"
+excludes = []
+includes = ["*.json"]
+options = ["format", "--write"]
+
+[formatter.formatjson5]
+command = "formatjson5"
+excludes = []
+includes = ["*.json5"]
+options = ["--replace"]
+
+[formatter.golangci-lint]
+command = "golangci-lint"
+excludes = ["vendor/*"]
+includes = ["*.go"]
+options = ["fmt"]
+
+[formatter.taplo]
+command = "taplo"
+excludes = []
+includes = ["*.toml"]
+options = ["format"]
+
+[formatter.toml-sort]
+command = "toml-sort"
+excludes = []
+includes = ["*.toml"]
+options = ["-i"]
+
+[formatter.yamlfmt]
+command = "yamlfmt"
+excludes = []
+includes = ["*.yaml", "*.yml"]
+options = []
