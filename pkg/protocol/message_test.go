@@ -8,9 +8,9 @@ import (
 
 func TestMessage_Encode(t *testing.T) {
 	tests := []struct {
-		name     string
-		msg      protocol.Message
-		wantErr  bool
+		name    string
+		msg     protocol.Message
+		wantErr bool
 	}{
 		{
 			name: "encode text message successfully",
