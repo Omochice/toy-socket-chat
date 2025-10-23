@@ -6,12 +6,6 @@ excludes = []
 includes = ["*.json"]
 options = ["format", "--write"]
 
-[formatter.formatjson5]
-command = "formatjson5"
-excludes = []
-includes = ["*.json5"]
-options = ["--replace"]
-
 [formatter.golangci-lint]
 command = "golangci-lint"
 excludes = ["vendor/*"]
