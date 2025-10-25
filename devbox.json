@@ -14,7 +14,8 @@
 		"init_hook": [],
 		"scripts": {
 			"fmt": "treefmt",
-			"check:fmt": "treefmt --ci"
+			"check:fmt": "treefmt --ci",
+			"check:golangci-lint": "golangci-lint run ./..."
 		}
 	}
 }
