@@ -3,8 +3,6 @@ package protocol
 //go:generate protoc --go_out=. --go_opt=paths=source_relative --proto_path=pb pb/message.proto
 
 import (
-	"bytes"
-	"encoding/gob"
 	"fmt"
 
 	"github.com/omochice/toy-socket-chat/pkg/protocol/pb"
@@ -51,13 +49,13 @@ func (m *Message) Encode() ([]byte, error) {
 	return data, nil
 }
 
-// Decode decodes bytes into a message using gob decoding
+// Decode decodes bytes into a message using protobuf
 func (m *Message) Decode(data []byte) error {
-	buf := bytes.NewBuffer(data)
-	decoder := gob.NewDecoder(buf)
-	if err := decoder.Decode(m); err != nil {
+	pbMsg := &pb.Message{}
+	if err := proto.Unmarshal(data, pbMsg); err != nil {
 		return fmt.Errorf("failed to decode message: %w", err)
 	}
+	m.fromProto(pbMsg)
 	return nil
 }
 
