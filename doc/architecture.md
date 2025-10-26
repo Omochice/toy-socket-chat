@@ -73,7 +73,7 @@ Messages are encoded using Protocol Buffers (protobuf), which provides:
 
 #### Protocol Buffer Schema
 
-The message schema is defined in `pkg/protocol/pb/message.proto`:
+The message schema is defined in `proto/message.proto`:
 
 ```protobuf
 enum MessageType {
