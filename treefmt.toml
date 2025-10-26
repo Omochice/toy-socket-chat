@@ -6,6 +6,12 @@ excludes = []
 includes = ["*.json"]
 options = ["format", "--write"]
 
+[formatter.buf]
+command = "buf"
+excludes = []
+includes = ["*.proto"]
+options = ["format", "--write"]
+
 [formatter.golangci-lint]
 command = "golangci-lint"
 excludes = ["vendor/*"]
