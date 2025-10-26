@@ -10,7 +10,8 @@
 		"yamlfmt@0.17.2",
 		"toml-sort@0.24.3",
 		"protobuf@32.1",
-		"protoc-gen-go@1.36.10"
+		"protoc-gen-go@1.36.10",
+		"buf@1.52.1"
 	],
 	"shell": {
 		"init_hook": [],
