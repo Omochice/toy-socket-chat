@@ -15,23 +15,9 @@ It includes two CLI tools (server and client) that allow multiple users to excha
 - Join/Leave Notifications: User join and leave events are notified to all participants
 - Concurrent Processing: Efficient concurrent processing using Goroutines
 
-## Requirements
+## Build
 
-- Go 1.25.2 or higher
-
-## Installation
-
-### Build
-
-Build the server and client binaries:
-
-```bash
-# Build server
-go build -o build/server ./cmd/server
-
-# Build client
-go build -o build/client ./cmd/client
-```
+See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Usage
 
