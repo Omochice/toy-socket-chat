@@ -6,7 +6,7 @@ Thank you for your interest in contributing to this project! This document provi
 
 This repository uses [jetify-com/devbox](https://github.com/jetify-com/devbox).
 
-The following documents assume that you are attaching to the shell using `devbox shell`.
+The instructions in this document assume that you are running commands from within the `devbox shell`.
 
 ## Build
 
