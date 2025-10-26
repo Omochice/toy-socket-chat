@@ -2,7 +2,7 @@
 
 Thank you for your interest in contributing to this project! This document provides guidelines and best practices for development.
 
-## Prerequirements
+## Prerequisites
 
 This repository uses [jetify-com/devbox](https://github.com/jetify-com/devbox).
 
