@@ -2,6 +2,18 @@
 
 Thank you for your interest in contributing to this project! This document provides guidelines and best practices for development.
 
+## Prerequisites
+
+This repository uses [jetify-com/devbox](https://github.com/jetify-com/devbox).
+
+The instructions in this document assume that you are running commands from within the `devbox shell`.
+
+## Build
+
+```bash
+devbox run build
+```
+
 ## Development Philosophy
 
 This project follows **Test-Driven Development (TDD)** principles. All code must be developed following the Red-Green-Refactor cycle.
@@ -232,4 +244,4 @@ toy-socket-chat/
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the MIT License.
+By contributing, you agree that your contributions will be licensed under the [zlib](./LICENSE) License.
