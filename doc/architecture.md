@@ -65,26 +65,65 @@ const (
 
 #### Encoding
 
-Messages are encoded using Go's `encoding/gob` package, which provides:
+Messages are encoded using Protocol Buffers (protobuf), which provides:
 - Efficient binary encoding
-- Built-in support for Go types
-- Automatic handling of complex structures
+- Cross-language compatibility
+- Explicit schema definition
+- Backward/forward compatibility support
 
-We chose `gob` for several reasons:
-- Simple to use without schema definitions
-- Type-safe encoding and decoding
-- Good performance for Go-to-Go communication
-- Available in the standard library
+#### Protocol Buffer Schema
 
-However, there are some trade-offs to consider:
-- It's not interoperable with other languages
-- The binary format isn't human-readable
-- Both ends must be Go applications
+The message schema is defined in `proto/message.proto`:
 
-For a production system, consider:
-- Protocol Buffers for language interoperability
-- JSON for human readability and debugging
-- MessagePack for smaller message sizes
+```protobuf
+enum MessageType {
+  MESSAGE_TYPE_TEXT = 0;
+  MESSAGE_TYPE_JOIN = 1;
+  MESSAGE_TYPE_LEAVE = 2;
+}
+
+message Message {
+  MessageType type = 1;
+  string sender = 2;
+  string content = 3;
+}
+```
+
+#### Code Generation
+
+Protobuf code is auto-generated from the schema:
+
+```bash
+# Using devbox
+devbox run generate:proto
+
+# Or using go generate
+go generate ./pkg/protocol/...
+```
+
+Generated code is committed to the repository (`pkg/protocol/pb/message.pb.go`) to ensure reproducible builds.
+
+#### Implementation Details
+
+The public API (`Message.Encode()` and `Message.Decode()`) remains unchanged. Protobuf is used internally through a conversion layer:
+
+```go
+// Internal conversion functions
+func (m *Message) toProto() *pb.Message
+func (m *Message) fromProto(pbMsg *pb.Message)
+```
+
+This design:
+- Isolates protobuf implementation details from the public API
+- Maintains backward compatibility with existing code
+- Allows future encoding changes without breaking the API
+
+We chose Protocol Buffers because:
+- Cross-language interoperability (could support non-Go clients)
+- Explicit schema definition makes the protocol clear and versioned
+- Better tooling support and ecosystem
+- Efficient binary format with smaller message sizes
+- Built-in support for schema evolution
 
 ### Server (`internal/server`)
 
@@ -380,7 +419,7 @@ Channels are more idiomatic and prevent forgetting to lock, but mutexes are simp
 
 We chose a mutex because it makes the intent clearer (protecting a data structure), requires less boilerplate code, and offers better performance for our read-heavy workload.
 
-### Why `encoding/gob`?
+### Why Protocol Buffers?
 
 See "Encoding" section above for detailed rationale.
 
