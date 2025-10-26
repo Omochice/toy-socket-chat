@@ -22,7 +22,7 @@
 			"fmt": "treefmt",
 			"check:fmt": "treefmt --ci",
 			"check:golangci-lint": "golangci-lint run ./...",
-			"generate:proto": "protoc --go_out=. --go_opt=paths=source_relative --proto_path=pkg/protocol/pb pkg/protocol/pb/message.proto"
+			"generate:proto": "protoc --go_out=pkg/protocol/pb --go_opt=paths=source_relative --proto_path=proto proto/message.proto"
 		}
 	}
 }

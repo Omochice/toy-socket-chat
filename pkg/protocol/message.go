@@ -1,6 +1,6 @@
 package protocol
 
-//go:generate protoc --go_out=. --go_opt=paths=source_relative --proto_path=pb pb/message.proto
+//go:generate protoc --go_out=pb --go_opt=paths=source_relative --proto_path=../../proto ../../proto/message.proto
 
 import (
 	"fmt"
