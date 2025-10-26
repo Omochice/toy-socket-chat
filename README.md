@@ -17,7 +17,13 @@ It includes two CLI tools (server and client) that allow multiple users to excha
 
 ## Build
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md).
+```bash
+devbox run build
+```
+
+The server and client binaries will be placed in the `build/` directory.
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for more information.
 
 ## Usage
 
