@@ -1,5 +1,7 @@
 package protocol
 
+//go:generate protoc --go_out=. --go_opt=paths=source_relative --proto_path=pb pb/message.proto
+
 import (
 	"bytes"
 	"encoding/gob"
