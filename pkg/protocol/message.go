@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/omochice/toy-socket-chat/pkg/protocol/pb"
+	"google.golang.org/protobuf/proto"
 )
 
 // MessageType represents the type of message
@@ -40,14 +41,14 @@ type Message struct {
 	Content string
 }
 
-// Encode encodes the message into bytes using gob encoding
+// Encode encodes the message into bytes using protobuf
 func (m *Message) Encode() ([]byte, error) {
-	var buf bytes.Buffer
-	encoder := gob.NewEncoder(&buf)
-	if err := encoder.Encode(m); err != nil {
+	pbMsg := m.toProto()
+	data, err := proto.Marshal(pbMsg)
+	if err != nil {
 		return nil, fmt.Errorf("failed to encode message: %w", err)
 	}
-	return buf.Bytes(), nil
+	return data, nil
 }
 
 // Decode decodes bytes into a message using gob decoding
