@@ -1,20 +1,23 @@
 package client
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
 	"net"
 	"sync"
 
+	"github.com/gobwas/ws"
 	"github.com/omochice/toy-socket-chat/pkg/protocol"
 )
 
-// Client represents a TCP chat client
+// Client represents a chat client
 type Client struct {
 	address  string
 	username string
-	conn     net.Conn
+	protocol string
+	conn     ClientConnection
 	messages chan protocol.Message
 	mu       sync.RWMutex
 	done     chan struct{}
@@ -22,10 +25,11 @@ type Client struct {
 }
 
 // New creates a new Client instance
-func New(address, username string) *Client {
+func New(address, username, proto string) *Client {
 	return &Client{
 		address:  address,
 		username: username,
+		protocol: proto,
 		messages: make(chan protocol.Message, 10),
 		done:     make(chan struct{}),
 	}
@@ -33,9 +37,20 @@ func New(address, username string) *Client {
 
 // Connect establishes a connection to the server
 func (c *Client) Connect() error {
-	conn, err := net.Dial("tcp", c.address)
+	var conn ClientConnection
+	var err error
+
+	switch c.protocol {
+	case "ws":
+		conn, err = c.connectWebSocket()
+	case "tcp":
+		fallthrough
+	default:
+		conn, err = c.connectTCP()
+	}
+
 	if err != nil {
-		return fmt.Errorf("failed to connect to server: %w", err)
+		return err
 	}
 
 	c.mu.Lock()
@@ -49,11 +64,32 @@ func (c *Client) Connect() error {
 	return nil
 }
 
+func (c *Client) connectTCP() (ClientConnection, error) {
+	conn, err := net.Dial("tcp", c.address)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect via TCP: %w", err)
+	}
+	return NewTCPClientConnection(conn), nil
+}
+
+func (c *Client) connectWebSocket() (ClientConnection, error) {
+	// Use ws.Dial to establish WebSocket connection
+	// ws.Dial returns (net.Conn, *bufio.Reader, Handshake, error)
+	wsConn, _, _, err := ws.Dial(context.Background(), fmt.Sprintf("ws://%s/", c.address))
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect via WebSocket: %w", err)
+	}
+
+	return NewWebSocketClientConnection(wsConn), nil
+}
+
 // Disconnect closes the connection to the server
 func (c *Client) Disconnect() {
 	c.mu.Lock()
 	if c.conn != nil {
-		c.conn.Close()
+		if err := c.conn.Close(); err != nil {
+			log.Printf("Error closing connection: %v", err)
+		}
 		c.conn = nil
 	}
 	c.mu.Unlock()
