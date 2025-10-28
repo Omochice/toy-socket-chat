@@ -12,29 +12,17 @@ The system consists of three main components:
 
 ## System Architecture
 
-```
-┌─────────────┐         ┌─────────────┐
-│   Client 1  │         │   Client 2  │
-│  (Terminal) │         │  (Terminal) │
-└──────┬──────┘         └──────┬──────┘
-       │                       │
-       │  TCP Connection       │
-       │                       │
-       └───────┬───────────────┘
-               │
-               │
-       ┌───────▼────────┐
-       │                │
-       │   TCP Server   │
-       │                │
-       └────────────────┘
-            │     │
-         Broadcast
-            │     │
-       ┌────▼─────▼────┐
-       │ Client Manager │
-       │  (Goroutines)  │
-       └────────────────┘
+```mermaid
+graph TD
+    Client1["Client 1<br/>(Terminal)"]
+    Client2["Client 2<br/>(Terminal)"]
+    TCPServer["TCP Server"]
+    ClientManager["Client Manager<br/>(Goroutines)"]
+
+    Client1 -- "TCP Connection" --> TCPServer
+    Client2 -- "TCP Connection" --> TCPServer
+    TCPServer -- "Broadcast" --> ClientManager
+    TCPServer -- "Broadcast" --> ClientManager
 ```
 
 ## Component Details
