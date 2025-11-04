@@ -453,51 +453,51 @@
         }
       }
     },
-    "treefmt@2.3.1": {
-      "last_modified": "2025-10-07T08:41:47Z",
-      "resolved": "github:NixOS/nixpkgs/bce5fe2bb998488d8e7e7856315f90496723793c#treefmt",
+    "treefmt@2.4.0": {
+      "last_modified": "2025-10-22T20:59:19Z",
+      "resolved": "github:NixOS/nixpkgs/01b6809f7f9d1183a2b3e081f0a1e6f8f415cb09#treefmt",
       "source": "devbox-search",
-      "version": "2.3.1",
+      "version": "2.4.0",
       "systems": {
         "aarch64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/i3z7bgdinzbhj7bk55akly7pq002dx8v-treefmt-2.3.1",
+              "path": "/nix/store/yr59blfb7jdwn6qkz8zz9cf8ki8gbfza-treefmt-2.4.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/i3z7bgdinzbhj7bk55akly7pq002dx8v-treefmt-2.3.1"
+          "store_path": "/nix/store/yr59blfb7jdwn6qkz8zz9cf8ki8gbfza-treefmt-2.4.0"
         },
         "aarch64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/p4xway7mmvhk76qncjlnikq8adpxywyk-treefmt-2.3.1",
+              "path": "/nix/store/mlpspqb71q3vqy018k5igqirykrnbfmj-treefmt-2.4.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/p4xway7mmvhk76qncjlnikq8adpxywyk-treefmt-2.3.1"
+          "store_path": "/nix/store/mlpspqb71q3vqy018k5igqirykrnbfmj-treefmt-2.4.0"
         },
         "x86_64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/gkaknx0118800qvpg67y9r6535ga4ryw-treefmt-2.3.1",
+              "path": "/nix/store/6srxnkiyl4d5wnw1p36ka77d520qg65w-treefmt-2.4.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/gkaknx0118800qvpg67y9r6535ga4ryw-treefmt-2.3.1"
+          "store_path": "/nix/store/6srxnkiyl4d5wnw1p36ka77d520qg65w-treefmt-2.4.0"
         },
         "x86_64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/jlfjlykz02vals3sm7h4g1lrig9lpndw-treefmt-2.3.1",
+              "path": "/nix/store/xq1681mm2pyi0vidfxd4z0jfdm6psw3h-treefmt-2.4.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/jlfjlykz02vals3sm7h4g1lrig9lpndw-treefmt-2.3.1"
+          "store_path": "/nix/store/xq1681mm2pyi0vidfxd4z0jfdm6psw3h-treefmt-2.4.0"
         }
       }
     },
