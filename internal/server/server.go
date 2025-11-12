@@ -12,7 +12,7 @@ import (
 
 // Client represents a connected client
 type Client struct {
-	conn     net.Conn
+	conn     Connection
 	username string
 	outgoing chan []byte
 }
@@ -62,17 +62,8 @@ func (s *Server) Start() error {
 				}
 			}
 
-			client := &Client{
-				conn:     conn,
-				outgoing: make(chan []byte, 10),
-			}
-
-			s.mu.Lock()
-			s.clients[client] = true
-			s.mu.Unlock()
-
-			s.wg.Add(1)
-			go s.handleClient(client)
+			// Handle connection in goroutine with protocol detection
+			go s.handleConnection(conn)
 		}
 	}
 }
@@ -81,12 +72,16 @@ func (s *Server) Start() error {
 func (s *Server) Stop() {
 	close(s.quit)
 	if s.listener != nil {
-		s.listener.Close()
+		if err := s.listener.Close(); err != nil {
+			log.Printf("Error closing listener: %v", err)
+		}
 	}
 
 	s.mu.Lock()
 	for client := range s.clients {
-		client.conn.Close()
+		if err := client.conn.Close(); err != nil {
+			log.Printf("Error closing client connection: %v", err)
+		}
 	}
 	s.mu.Unlock()
 
@@ -108,6 +103,54 @@ func (s *Server) ClientCount() int {
 	return len(s.clients)
 }
 
+// handleConnection detects protocol and creates appropriate Connection
+func (s *Server) handleConnection(rawConn net.Conn) {
+	// Detect protocol
+	protocol, reader, err := detectProtocol(rawConn)
+	if err != nil {
+		log.Printf("Protocol detection failed: %v", err)
+		if closeErr := rawConn.Close(); closeErr != nil {
+			log.Printf("Error closing connection: %v", closeErr)
+		}
+		return
+	}
+
+	var conn Connection
+
+	switch protocol {
+	case protocolHTTP:
+		// WebSocket upgrade
+		conn, err = s.upgradeWebSocket(rawConn, reader)
+		if err != nil {
+			log.Printf("WebSocket upgrade failed: %v", err)
+			if closeErr := rawConn.Close(); closeErr != nil {
+				log.Printf("Error closing connection: %v", closeErr)
+			}
+			return
+		}
+		log.Printf("WebSocket connection from %s", conn.RemoteAddr())
+
+	case protocolTCP:
+		// Wrap as TCP connection with buffered reader
+		// Since we peeked at the data, we need to use the buffered reader
+		conn = NewTCPConnectionWithReader(rawConn, reader)
+		log.Printf("TCP connection from %s", conn.RemoteAddr())
+	}
+
+	// Create client
+	client := &Client{
+		conn:     conn,
+		outgoing: make(chan []byte, 10),
+	}
+
+	s.mu.Lock()
+	s.clients[client] = true
+	s.mu.Unlock()
+
+	s.wg.Add(1)
+	go s.handleClient(client)
+}
+
 // handleClient handles a single client connection
 func (s *Server) handleClient(client *Client) {
 	defer s.wg.Done()
@@ -116,7 +159,9 @@ func (s *Server) handleClient(client *Client) {
 		s.mu.Lock()
 		delete(s.clients, client)
 		s.mu.Unlock()
-		client.conn.Close()
+		if err := client.conn.Close(); err != nil {
+			log.Printf("Error closing client connection: %v", err)
+		}
 	}()
 
 	// Start goroutine to send messages to client
