@@ -501,51 +501,51 @@
         }
       }
     },
-    "yamlfmt@0.17.2": {
-      "last_modified": "2025-10-07T08:41:47Z",
-      "resolved": "github:NixOS/nixpkgs/bce5fe2bb998488d8e7e7856315f90496723793c#yamlfmt",
+    "yamlfmt@0.20.0": {
+      "last_modified": "2025-11-15T07:28:48Z",
+      "resolved": "github:NixOS/nixpkgs/1d4c88323ac36805d09657d13a5273aea1b34f0c#yamlfmt",
       "source": "devbox-search",
-      "version": "0.17.2",
+      "version": "0.20.0",
       "systems": {
         "aarch64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/m45yzcdz43xjrzlrhzyvwkndqckq85bm-yamlfmt-0.17.2",
+              "path": "/nix/store/yrjsn5rljm19jfm410xbdv3xl34pwmds-yamlfmt-0.20.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/m45yzcdz43xjrzlrhzyvwkndqckq85bm-yamlfmt-0.17.2"
+          "store_path": "/nix/store/yrjsn5rljm19jfm410xbdv3xl34pwmds-yamlfmt-0.20.0"
         },
         "aarch64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/i8g3ylsn4s0h0hg2ssp3jqrbrgn8s2jg-yamlfmt-0.17.2",
+              "path": "/nix/store/7vif4w1w0ahm820asrcl7fq0xrfdmd9x-yamlfmt-0.20.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/i8g3ylsn4s0h0hg2ssp3jqrbrgn8s2jg-yamlfmt-0.17.2"
+          "store_path": "/nix/store/7vif4w1w0ahm820asrcl7fq0xrfdmd9x-yamlfmt-0.20.0"
         },
         "x86_64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/s9l3a6x2bcb87k0hlv2xssvnk38qg0qz-yamlfmt-0.17.2",
+              "path": "/nix/store/b2q36iiqywgndywyxswxrjc2cncxq1y6-yamlfmt-0.20.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/s9l3a6x2bcb87k0hlv2xssvnk38qg0qz-yamlfmt-0.17.2"
+          "store_path": "/nix/store/b2q36iiqywgndywyxswxrjc2cncxq1y6-yamlfmt-0.20.0"
         },
         "x86_64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/3xzpa4890vsn134fg970s7nfs5hrnjri-yamlfmt-0.17.2",
+              "path": "/nix/store/qpc0l6xrdq8cm62473xq46hqpydappb6-yamlfmt-0.20.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/3xzpa4890vsn134fg970s7nfs5hrnjri-yamlfmt-0.17.2"
+          "store_path": "/nix/store/qpc0l6xrdq8cm62473xq46hqpydappb6-yamlfmt-0.20.0"
         }
       }
     }
