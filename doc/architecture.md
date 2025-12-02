@@ -13,16 +13,66 @@ The system consists of three main components:
 ## System Architecture
 
 ```mermaid
-graph TD
-    Client1["Client 1<br/>(Terminal)"]
-    Client2["Client 2<br/>(Terminal)"]
-    TCPServer["TCP Server"]
-    ClientManager["Client Manager<br/>(Goroutines)"]
+flowchart TB
+    subgraph ClientApp1["Client Application 1"]
+        CLI1[CLI Interface]
+        ClientLogic1[Client Logic]
+        Receiver1[Receiver Goroutine]
+    end
 
-    Client1 -- "TCP Connection" --> TCPServer
-    Client2 -- "TCP Connection" --> TCPServer
-    TCPServer -- "Broadcast" --> ClientManager
-    TCPServer -- "Broadcast" --> ClientManager
+    subgraph ClientApp2["Client Application 2"]
+        CLI2[CLI Interface]
+        ClientLogic2[Client Logic]
+        Receiver2[Receiver Goroutine]
+    end
+
+    subgraph ServerApp["Server Application"]
+        Listener[TCP Listener]
+        subgraph ClientHandlers["Client Handlers"]
+            Handler1[Handler Goroutine 1]
+            Handler2[Handler Goroutine 2]
+            Writer1[Writer Goroutine 1]
+            Writer2[Writer Goroutine 2]
+        end
+        ClientsMap["Clients Map<br/>(sync.RWMutex)"]
+        Broadcaster[Broadcast Function]
+    end
+
+    subgraph Protocol["Protocol Layer"]
+        Encoder[Message Encoder]
+        Decoder[Message Decoder]
+        Protobuf[Protocol Buffers]
+    end
+
+    CLI1 --> ClientLogic1
+    CLI2 --> ClientLogic2
+    ClientLogic1 <-->|TCP Socket| Listener
+    ClientLogic2 <-->|TCP Socket| Listener
+    ClientLogic1 --> Receiver1
+    ClientLogic2 --> Receiver2
+
+    Listener --> Handler1
+    Listener --> Handler2
+    Handler1 --> ClientsMap
+    Handler2 --> ClientsMap
+    Handler1 --> Broadcaster
+    Handler2 --> Broadcaster
+    Broadcaster --> Writer1
+    Broadcaster --> Writer2
+    Writer1 -->|outgoing chan| Handler1
+    Writer2 -->|outgoing chan| Handler2
+
+    ClientLogic1 -.-> Encoder
+    ClientLogic2 -.-> Encoder
+    Receiver1 -.-> Decoder
+    Receiver2 -.-> Decoder
+    Handler1 -.-> Decoder
+    Handler2 -.-> Decoder
+    Writer1 -.-> Encoder
+    Writer2 -.-> Encoder
+
+    Encoder -.-> Protobuf
+    Decoder -.-> Protobuf
 ```
 
 ## Component Details
@@ -84,9 +134,6 @@ Protobuf code is auto-generated from the schema:
 ```bash
 # Using devbox
 devbox run generate:proto
-
-# Or using go generate
-go generate ./pkg/protocol/...
 ```
 
 Generated code is committed to the repository (`pkg/protocol/pb/message.pb.go`) to ensure reproducible builds.
@@ -138,24 +185,32 @@ type Client struct {
 
 #### Connection Flow
 
-1. **Accept Connection**
-   ```
-   listener.Accept() → New Client → Add to clients map → Spawn goroutines
-   ```
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Server
+    participant ClientManager
+    participant Broadcast
 
-2. **Client Handling** (2 goroutines per client)
-   - Reader goroutine reads messages from the TCP connection
-   - Writer goroutine writes messages from the outgoing channel to the TCP connection
+    Client->>Server: TCP Connect
+    Server->>ClientManager: Create Client struct
+    Server->>ClientManager: Start handleClient goroutine
+    Server->>ClientManager: Start writer goroutine
 
-3. **Message Broadcasting**
-   ```
-   Client sends message → Server receives → Broadcast to all other clients
-   ```
+    Note over ClientManager: Client registered<br/>in clients map
 
-4. **Disconnect**
-   ```
-   Connection closed → Remove from clients map → Close channels → Cleanup
-   ```
+    loop Message Handling
+        Client->>ClientManager: Send message (read)
+        ClientManager->>ClientManager: Decode message
+        ClientManager->>Broadcast: Broadcast to other clients
+        Broadcast->>ClientManager: Write to outgoing channels
+    end
+
+    Client->>ClientManager: Close connection
+    ClientManager->>Server: Remove from clients map
+    ClientManager->>ClientManager: Close outgoing channel
+    Note over ClientManager: Goroutines terminated
+```
 
 #### Concurrency Model
 
@@ -225,25 +280,29 @@ type Client struct {
 
 #### Operation Flow
 
-1. **Connect**
-   ```
-   Connect() → Dial TCP → Spawn receiver goroutine → Return
-   ```
+```mermaid
+flowchart TD
+    Start([Client Start]) --> Parse[Parse CLI flags]
+    Parse --> Create[Create Client instance]
+    Create --> Connect[Connect to server]
+    Connect -->|Success| Join[Send JOIN message]
+    Connect -->|Failed| Error[Log error and exit]
 
-2. **Send Message**
-   ```
-   SendMessage() → Encode → Write to connection
-   ```
+    Join --> StartReceiver[Start receiver goroutine]
+    StartReceiver --> ReadInput[Read from stdin]
 
-3. **Receive Messages**
-   ```
-   Background goroutine: Read from connection → Decode → Send to messages channel
-   ```
+    ReadInput --> CheckQuit{Input = 'quit'?}
+    CheckQuit -->|Yes| Leave[Send LEAVE message]
+    CheckQuit -->|No| Send[Send TEXT message]
 
-4. **Disconnect**
-   ```
-   Disconnect() → Close connection → Signal done → Wait for goroutines
-   ```
+    Send --> ReadInput
+    Leave --> Disconnect[Disconnect from server]
+    Disconnect --> End([Client Exit])
+
+    StartReceiver -.-> ReceiveLoop[Receive messages loop]
+    ReceiveLoop --> Display[Display to stdout]
+    Display --> ReceiveLoop
+```
 
 #### Concurrency Model
 
@@ -263,98 +322,77 @@ mu sync.RWMutex  // Protects connection access
 
 ### Sending a Message
 
-```
-User Input
-    ↓
-Client.SendMessage()
-    ↓
-protocol.Message.Encode()
-    ↓
-TCP Write (client → server)
-    ↓
-Server receives (reader goroutine)
-    ↓
-Server.broadcast()
-    ↓
-For each connected client:
-    ↓
-Write to client.outgoing channel
-    ↓
-Writer goroutine reads channel
-    ↓
-TCP Write (server → client)
-    ↓
-Client receiver goroutine reads
-    ↓
-protocol.Message.Decode()
-    ↓
-Send to messages channel
-    ↓
-Application reads message
-    ↓
-Display to user
+```mermaid
+sequenceDiagram
+    participant User
+    participant Client
+    participant Protocol
+    participant Server
+    participant OtherClients
+
+    User->>Client: Type message + Enter
+    Client->>Protocol: Create Message struct
+    Protocol->>Protocol: Convert to protobuf
+    Protocol->>Protocol: Marshal to bytes
+    Protocol-->>Client: Encoded bytes
+
+    Client->>Server: Write bytes to TCP connection
+    Server->>Server: Read from connection
+    Server->>Protocol: Decode message
+    Protocol->>Protocol: Unmarshal from bytes
+    Protocol->>Protocol: Convert from protobuf
+    Protocol-->>Server: Message struct
+
+    Server->>Server: broadcast(data, sender)
+
+    loop For each other client
+        Server->>OtherClients: Write to outgoing channel
+        OtherClients->>OtherClients: Read from outgoing channel
+        OtherClients->>OtherClients: Write to TCP connection
+    end
+
+    OtherClients->>Protocol: Decode message
+    Protocol-->>OtherClients: Message struct
+    OtherClients->>User: Display "[sender]: message"
 ```
 
 ### Connection Lifecycle
 
-```
-Client Side:                    Server Side:
-    ↓                               ↓
-Connect()                       listener.Accept()
-    ↓                               ↓
-net.Dial()  ─────────────────→  New connection
-    ↓                               ↓
-Start receiver goroutine        Create Client object
-    ↓                               ↓
-Send JOIN message  ───────────→  Add to clients map
-    ↓                               ↓
-                                Start reader goroutine
-                                Start writer goroutine
-    ↓                               ↓
-Chat messages   ←────────────→  Broadcast messages
-    ↓                               ↓
-Send LEAVE message ───────────→ Remove from clients
-    ↓                               ↓
-Disconnect()                    Close connection
-    ↓                               ↓
-conn.Close()    ←───────────────  Cleanup goroutines
-```
-
-
 ```mermaid
-sequenceDiagram
-    participant Client as Client Side
-    participant Server as Server Side
+stateDiagram-v2
+    [*] --> Disconnected: Client Created
 
-    Note over Client: Connect()
-    Note over Client: net.Dial()
-    Client->>+Server: New Connection
-    Note over Client: Start receiver goroutine
-    Note over Server: Create Client object
-    Client->>Server: net.Dial()
-    Server-->>Client: New connection
+    Disconnected --> Connecting: Connect()
+    Connecting --> Connected: TCP handshake success
+    Connecting --> Disconnected: Connection failed
 
-    Client->>Client: Start receiver goroutine
-    Server->>Server: Create Client object
+    Connected --> Joined: Send JOIN message
+    Joined --> Active: Join acknowledged
 
-    Client->>Server: Send JOIN message
-    Server->>Server: Add to clients map
+    Active --> Active: Send/Receive messages
+    Active --> Leaving: User types 'quit'
+    Active --> Disconnected: Connection error
 
-    Server->>Server: Start reader goroutine
-    Server->>Server: Start writer goroutine
+    Leaving --> Disconnected: Send LEAVE message
+    Disconnected --> [*]: Client destroyed
 
-    Client-->>Server: Chat messages
-    Server-->>Client: Broadcast messages
+    note right of Connected
+        Receiver goroutine started
+    end note
 
-    Client->>Server: Send LEAVE message
-    deactivate Server
-    Server->>Server: Remove from clients
+    note right of Active
+        Normal operation:
+        - Reading stdin
+        - Receiving messages
+        - Broadcasting to server
+    end note
 
-    Client->>Server: Disconnect()
-    Server-->>Client: Close connection
-
-    Client->>Client: conn.Close()
-    Server->>Server: Cleanup goroutines
+    note right of Leaving
+        Graceful shutdown:
+        1. Send LEAVE
+        2. Close connection
+        3. Wait for goroutines
+    end note
 ```
 
 ## Error Handling
