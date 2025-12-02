@@ -320,6 +320,43 @@ Disconnect()                    Close connection
 conn.Close()    ←───────────────  Cleanup goroutines
 ```
 
+
+```mermaid
+sequenceDiagram
+    participant Client as Client Side
+    participant Server as Server Side
+
+    Note over Client: Connect()
+    Note over Client: net.Dial()
+    Client->>+Server: New Connection
+    Note over Client: Start receiver goroutine
+    Note over Server: Create Client object
+    Client->>Server: net.Dial()
+    Server-->>Client: New connection
+
+    Client->>Client: Start receiver goroutine
+    Server->>Server: Create Client object
+
+    Client->>Server: Send JOIN message
+    Server->>Server: Add to clients map
+
+    Server->>Server: Start reader goroutine
+    Server->>Server: Start writer goroutine
+
+    Client-->>Server: Chat messages
+    Server-->>Client: Broadcast messages
+
+    Client->>Server: Send LEAVE message
+    deactivate Server
+    Server->>Server: Remove from clients
+
+    Client->>Server: Disconnect()
+    Server-->>Client: Close connection
+
+    Client->>Client: conn.Close()
+    Server->>Server: Cleanup goroutines
+```
+
 ## Error Handling
 
 ### Server Errors
