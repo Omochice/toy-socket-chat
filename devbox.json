@@ -4,7 +4,7 @@
 		"formatjson5@0.2.6",
 		"treefmt@2.4.0",
 		"go@1.25.4",
-		"golangci-lint@2.6.2",
+		"golangci-lint@2.7.1",
 		"biome@2.3.8",
 		"taplo@0.10.0",
 		"yamlfmt@0.20.0",
