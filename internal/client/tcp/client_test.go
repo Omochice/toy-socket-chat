@@ -8,7 +8,6 @@ import (
 	"github.com/omochice/toy-socket-chat/internal/client/tcp"
 )
 
-// mockServer creates a simple mock TCP server for testing
 func startMockServer(t *testing.T) (string, func()) {
 	listener, err := net.Listen("tcp", ":0")
 	if err != nil {
@@ -26,7 +25,6 @@ func startMockServer(t *testing.T) (string, func()) {
 				if err != nil {
 					return
 				}
-				// Echo back any received messages
 				go func(c net.Conn) {
 					defer c.Close()
 					buf := make([]byte, 4096)
@@ -84,7 +82,6 @@ func TestClient_SendMessage(t *testing.T) {
 	}
 	defer c.Disconnect()
 
-	// Send a text message
 	err = c.SendMessage("Hello, World!")
 	if err != nil {
 		t.Errorf("Failed to send message: %v", err)
@@ -102,10 +99,7 @@ func TestClient_ReceiveMessage(t *testing.T) {
 	}
 	defer c.Disconnect()
 
-	// Start receiving messages
 	msgChan := c.Messages()
-
-	// Send a message (mock server will echo it back)
 	testMsg := "Test message"
 	err = c.SendMessage(testMsg)
 	if err != nil {
@@ -147,7 +141,6 @@ func TestClient_Join(t *testing.T) {
 	}
 	defer c.Disconnect()
 
-	// Send join message
 	err = c.Join()
 	if err != nil {
 		t.Errorf("Failed to send join message: %v", err)
@@ -164,7 +157,6 @@ func TestClient_Leave(t *testing.T) {
 		t.Fatalf("Failed to connect: %v", err)
 	}
 
-	// Send leave message
 	err = c.Leave()
 	if err != nil {
 		t.Errorf("Failed to send leave message: %v", err)
