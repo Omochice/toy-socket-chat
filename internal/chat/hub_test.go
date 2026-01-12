@@ -293,17 +293,13 @@ func TestHub_HandleClient_UnregistersOnDisconnect(t *testing.T) {
 
 	select {
 	case <-done:
-	case <-timeout(time.Second):
+	case <-time.After(time.Second):
 		t.Fatal("HandleClient did not finish")
 	}
 
 	if hub.ClientCount() != 0 {
 		t.Errorf("expected 0 clients after disconnect, got %d", hub.ClientCount())
 	}
-}
-
-func timeout(d time.Duration) <-chan time.Time {
-	return time.After(d)
 }
 
 func TestHub_Stop(t *testing.T) {
