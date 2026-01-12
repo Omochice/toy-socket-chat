@@ -305,3 +305,40 @@ func TestHub_HandleClient_UnregistersOnDisconnect(t *testing.T) {
 func timeout(d time.Duration) <-chan time.Time {
 	return time.After(d)
 }
+
+func TestHub_Stop(t *testing.T) {
+	hub := chat.NewHub()
+
+	conn1 := newMockConn("127.0.0.1:1234")
+	client1 := &chat.Client{
+		Conn:     conn1,
+		Username: "user1",
+		Outgoing: make(chan []byte, 10),
+	}
+	conn2 := newMockConn("127.0.0.1:5678")
+	client2 := &chat.Client{
+		Conn:     conn2,
+		Username: "user2",
+		Outgoing: make(chan []byte, 10),
+	}
+
+	hub.Register(client1)
+	hub.Register(client2)
+
+	if hub.ClientCount() != 2 {
+		t.Fatalf("expected 2 clients, got %d", hub.ClientCount())
+	}
+
+	hub.Stop()
+
+	if hub.ClientCount() != 0 {
+		t.Errorf("expected 0 clients after stop, got %d", hub.ClientCount())
+	}
+
+	if !conn1.closed {
+		t.Error("expected conn1 to be closed")
+	}
+	if !conn2.closed {
+		t.Error("expected conn2 to be closed")
+	}
+}

@@ -65,6 +65,16 @@ func (h *Hub) ClientCount() int {
 	return len(h.clients)
 }
 
+// Stop closes all client connections and clears the client list.
+func (h *Hub) Stop() {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	for client := range h.clients {
+		client.Conn.Close()
+		delete(h.clients, client)
+	}
+}
+
 // HandleClient manages a single client's message loop.
 // It reads messages from the client's connection, processes them,
 // and broadcasts to other clients. Returns when connection closes.
