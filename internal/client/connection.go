@@ -63,7 +63,6 @@ func NewWebSocketClientConnection(conn net.Conn) *WebSocketClientConnection {
 }
 
 func (wc *WebSocketClientConnection) Write(data []byte) (int, error) {
-	// Write binary message using gobwas/ws (client side)
 	err := wsutil.WriteClientBinary(wc.conn, data)
 	if err != nil {
 		return 0, err
@@ -75,7 +74,6 @@ func (wc *WebSocketClientConnection) Read(buf []byte) (int, error) {
 	wc.mu.Lock()
 	defer wc.mu.Unlock()
 
-	// Return buffered data if available
 	if wc.readBufferPos < len(wc.readBuffer) {
 		n := copy(buf, wc.readBuffer[wc.readBufferPos:])
 		wc.readBufferPos += n
@@ -86,16 +84,13 @@ func (wc *WebSocketClientConnection) Read(buf []byte) (int, error) {
 		return n, nil
 	}
 
-	// Read next WebSocket message using gobwas/ws (server messages)
 	data, err := wsutil.ReadServerBinary(wc.conn)
 	if err != nil {
 		return 0, err
 	}
 
-	// Copy to output buffer
 	n := copy(buf, data)
 	if n < len(data) {
-		// Buffer remaining data
 		wc.readBuffer = data[n:]
 		wc.readBufferPos = 0
 	}
@@ -104,7 +99,6 @@ func (wc *WebSocketClientConnection) Read(buf []byte) (int, error) {
 }
 
 func (wc *WebSocketClientConnection) Close() error {
-	// Send close frame
 	_ = wsutil.WriteClientMessage(wc.conn, ws.OpClose, nil)
 	return wc.conn.Close()
 }
