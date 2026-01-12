@@ -95,6 +95,19 @@ func TestServer_ClientConnection(t *testing.T) {
 		_ = conn2.Close()
 	}()
 
+	// Send join message from client 2
+	joinMsg2 := protocol.Message{
+		Type:   protocol.MessageTypeJoin,
+		Sender: "user2",
+	}
+	data2, err := joinMsg2.Encode()
+	if err != nil {
+		t.Fatalf("Failed to encode join message for client 2: %v", err)
+	}
+	if _, err := conn2.Write(data2); err != nil {
+		t.Fatalf("Failed to send join message from client 2: %v", err)
+	}
+
 	// Wait for second client to be registered
 	time.Sleep(100 * time.Millisecond)
 
