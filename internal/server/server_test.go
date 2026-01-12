@@ -126,12 +126,10 @@ func TestServer_MessageBroadcast(t *testing.T) {
 	}()
 	defer srv.Stop()
 
-	// Wait for server to start
 	time.Sleep(100 * time.Millisecond)
 
 	addr := srv.Addr()
 
-	// Connect two clients
 	conn1, err := net.Dial("tcp", addr)
 	if err != nil {
 		t.Fatalf("Failed to connect client 1: %v", err)
@@ -148,30 +146,74 @@ func TestServer_MessageBroadcast(t *testing.T) {
 		_ = conn2.Close()
 	}()
 
-	// Wait for connections to be established
+	joinMsg1 := protocol.Message{
+		Type:   protocol.MessageTypeJoin,
+		Sender: "user1",
+	}
+	data1, err := joinMsg1.Encode()
+	if err != nil {
+		t.Fatalf("Failed to encode join message for client 1: %v", err)
+	}
+	if _, err := conn1.Write(data1); err != nil {
+		t.Fatalf("Failed to send join message from client 1: %v", err)
+	}
+
+	joinMsg2 := protocol.Message{
+		Type:   protocol.MessageTypeJoin,
+		Sender: "user2",
+	}
+	data2, err := joinMsg2.Encode()
+	if err != nil {
+		t.Fatalf("Failed to encode join message for client 2: %v", err)
+	}
+	if _, err := conn2.Write(data2); err != nil {
+		t.Fatalf("Failed to send join message from client 2: %v", err)
+	}
+
 	time.Sleep(100 * time.Millisecond)
 
-	// Send a text message from client 1
 	textMsg := protocol.Message{
 		Type:    protocol.MessageTypeText,
 		Sender:  "user1",
 		Content: "Hello from user1",
 	}
-	data, err := textMsg.Encode()
+	textData, err := textMsg.Encode()
 	if err != nil {
 		t.Fatalf("Failed to encode text message: %v", err)
 	}
 
-	if _, err := conn1.Write(data); err != nil {
+	if _, err := conn1.Write(textData); err != nil {
 		t.Fatalf("Failed to send text message: %v", err)
 	}
 
-	// Client 2 should receive the message
-	// This is a basic test - in real implementation, we'd need proper message framing
-	time.Sleep(200 * time.Millisecond)
+	if err := conn2.SetReadDeadline(time.Now().Add(2 * time.Second)); err != nil {
+		t.Fatalf("Failed to set read deadline: %v", err)
+	}
 
-	// Test passes if no errors occurred during broadcast
-	// More sophisticated testing would involve reading from conn2
+	buf := make([]byte, 1024)
+	var receivedMsg protocol.Message
+
+	for {
+		n, err := conn2.Read(buf)
+		if err != nil {
+			t.Fatalf("Failed to read from conn2: %v", err)
+		}
+
+		if err := receivedMsg.Decode(buf[:n]); err != nil {
+			t.Fatalf("Failed to decode received message: %v", err)
+		}
+
+		if receivedMsg.Type == protocol.MessageTypeText {
+			break
+		}
+	}
+
+	if receivedMsg.Sender != "user1" {
+		t.Errorf("Expected sender 'user1', got %q", receivedMsg.Sender)
+	}
+	if receivedMsg.Content != "Hello from user1" {
+		t.Errorf("Expected content 'Hello from user1', got %q", receivedMsg.Content)
+	}
 }
 
 func TestServer_Stop(t *testing.T) {
