@@ -7,6 +7,7 @@ import (
 
 	"github.com/omochice/toy-socket-chat/internal/chat"
 	"github.com/omochice/toy-socket-chat/internal/client"
+	tcpclient "github.com/omochice/toy-socket-chat/internal/client/tcp"
 	wsclient "github.com/omochice/toy-socket-chat/internal/client/ws"
 	"github.com/omochice/toy-socket-chat/internal/server"
 	"github.com/omochice/toy-socket-chat/internal/transport/tcp"
@@ -224,7 +225,7 @@ func TestIntegration_CrossTransport(t *testing.T) {
 	wsAddr := "ws://" + wsSrv.Addr()
 
 	// Connect TCP client
-	tcpClient := client.New(tcpAddr, "tcp_user")
+	tcpClient := tcpclient.New(tcpAddr, "tcp_user")
 	if err := tcpClient.Connect(); err != nil {
 		t.Fatalf("TCP client failed to connect: %v", err)
 	}

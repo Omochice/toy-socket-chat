@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/omochice/toy-socket-chat/internal/client"
+	"github.com/omochice/toy-socket-chat/internal/client/tcp"
 )
 
 func main() {
@@ -22,7 +22,7 @@ func main() {
 	}
 
 	// Create client
-	c := client.New(*serverAddr, *username)
+	c := tcp.New(*serverAddr, *username)
 
 	// Connect to server
 	if err := c.Connect(); err != nil {
