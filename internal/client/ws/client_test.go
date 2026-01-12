@@ -21,7 +21,6 @@ func TestClient_ConnectAndDisconnect(t *testing.T) {
 		}
 		defer c.Close(websocket.StatusNormalClosure, "")
 
-		// Wait for client to disconnect
 		c.Read(context.Background())
 	}))
 	defer server.Close()
@@ -215,7 +214,6 @@ func TestClient_ReceiveMessages(t *testing.T) {
 		data, _ := msg.Encode()
 		c.Write(context.Background(), websocket.MessageBinary, data)
 
-		// Wait for client to disconnect
 		c.Read(context.Background())
 	}))
 	defer server.Close()
