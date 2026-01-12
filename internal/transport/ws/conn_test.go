@@ -90,7 +90,6 @@ func TestConn_Close(t *testing.T) {
 		}
 		defer c.Close(websocket.StatusNormalClosure, "")
 
-		// Wait for client to close
 		c.Read(context.Background())
 	}))
 	defer server.Close()
