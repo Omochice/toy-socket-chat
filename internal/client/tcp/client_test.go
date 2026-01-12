@@ -1,14 +1,13 @@
-package client_test
+package tcp_test
 
 import (
 	"net"
 	"testing"
 	"time"
 
-	"github.com/omochice/toy-socket-chat/internal/client"
+	"github.com/omochice/toy-socket-chat/internal/client/tcp"
 )
 
-// mockServer creates a simple mock TCP server for testing
 func startMockServer(t *testing.T) (string, func()) {
 	listener, err := net.Listen("tcp", ":0")
 	if err != nil {
@@ -26,7 +25,6 @@ func startMockServer(t *testing.T) (string, func()) {
 				if err != nil {
 					return
 				}
-				// Echo back any received messages
 				go func(c net.Conn) {
 					defer c.Close()
 					buf := make([]byte, 4096)
@@ -56,7 +54,7 @@ func TestClient_Connect(t *testing.T) {
 	addr, cleanup := startMockServer(t)
 	defer cleanup()
 
-	c := client.New(addr, "testuser")
+	c := tcp.New(addr, "testuser")
 	err := c.Connect()
 	if err != nil {
 		t.Fatalf("Failed to connect: %v", err)
@@ -77,14 +75,13 @@ func TestClient_SendMessage(t *testing.T) {
 	addr, cleanup := startMockServer(t)
 	defer cleanup()
 
-	c := client.New(addr, "testuser")
+	c := tcp.New(addr, "testuser")
 	err := c.Connect()
 	if err != nil {
 		t.Fatalf("Failed to connect: %v", err)
 	}
 	defer c.Disconnect()
 
-	// Send a text message
 	err = c.SendMessage("Hello, World!")
 	if err != nil {
 		t.Errorf("Failed to send message: %v", err)
@@ -95,17 +92,14 @@ func TestClient_ReceiveMessage(t *testing.T) {
 	addr, cleanup := startMockServer(t)
 	defer cleanup()
 
-	c := client.New(addr, "testuser")
+	c := tcp.New(addr, "testuser")
 	err := c.Connect()
 	if err != nil {
 		t.Fatalf("Failed to connect: %v", err)
 	}
 	defer c.Disconnect()
 
-	// Start receiving messages
 	msgChan := c.Messages()
-
-	// Send a message (mock server will echo it back)
 	testMsg := "Test message"
 	err = c.SendMessage(testMsg)
 	if err != nil {
@@ -127,7 +121,7 @@ func TestClient_ReceiveMessage(t *testing.T) {
 }
 
 func TestClient_SendWithoutConnection(t *testing.T) {
-	c := client.New("localhost:9999", "testuser")
+	c := tcp.New("localhost:9999", "testuser")
 
 	// Try to send without connecting
 	err := c.SendMessage("This should fail")
@@ -140,14 +134,13 @@ func TestClient_Join(t *testing.T) {
 	addr, cleanup := startMockServer(t)
 	defer cleanup()
 
-	c := client.New(addr, "testuser")
+	c := tcp.New(addr, "testuser")
 	err := c.Connect()
 	if err != nil {
 		t.Fatalf("Failed to connect: %v", err)
 	}
 	defer c.Disconnect()
 
-	// Send join message
 	err = c.Join()
 	if err != nil {
 		t.Errorf("Failed to send join message: %v", err)
@@ -158,13 +151,12 @@ func TestClient_Leave(t *testing.T) {
 	addr, cleanup := startMockServer(t)
 	defer cleanup()
 
-	c := client.New(addr, "testuser")
+	c := tcp.New(addr, "testuser")
 	err := c.Connect()
 	if err != nil {
 		t.Fatalf("Failed to connect: %v", err)
 	}
 
-	// Send leave message
 	err = c.Leave()
 	if err != nil {
 		t.Errorf("Failed to send leave message: %v", err)

@@ -7,28 +7,36 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/omochice/toy-socket-chat/internal/server"
+	"github.com/omochice/toy-socket-chat/internal/chat"
+	"github.com/omochice/toy-socket-chat/internal/transport/tcp"
+	"github.com/omochice/toy-socket-chat/internal/transport/ws"
 )
 
 func main() {
-	// Parse command-line flags
-	port := flag.String("port", ":8080", "Port to listen on (e.g., :8080)")
+	tcpPort := flag.String("tcp", ":8080", "TCP port to listen on")
+	wsPort := flag.String("ws", ":8081", "WebSocket port to listen on")
 	flag.Parse()
 
-	// Create and start server
-	srv := server.New(*port)
+	hub := chat.NewHub()
 
-	// Handle graceful shutdown
+	tcpSrv := tcp.New(*tcpPort, hub)
+	wsSrv := ws.New(*wsPort, hub)
+
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
-	errChan := make(chan error, 1)
+	errChan := make(chan error, 2)
+
 	go func() {
-		log.Printf("Starting server on %s...", *port)
-		errChan <- srv.Start()
+		log.Printf("Starting TCP server on %s...", *tcpPort)
+		errChan <- tcpSrv.Start()
 	}()
 
-	// Wait for either error or shutdown signal
+	go func() {
+		log.Printf("Starting WebSocket server on %s...", *wsPort)
+		errChan <- wsSrv.Start()
+	}()
+
 	select {
 	case err := <-errChan:
 		if err != nil {
@@ -36,7 +44,9 @@ func main() {
 		}
 	case sig := <-sigChan:
 		log.Printf("Received signal %v, shutting down...", sig)
-		srv.Stop()
+		tcpSrv.Stop()
+		wsSrv.Stop()
+		hub.Stop()
 	}
 
 	log.Println("Server stopped")

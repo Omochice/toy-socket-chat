@@ -9,20 +9,35 @@ import (
 	"strings"
 
 	"github.com/omochice/toy-socket-chat/internal/client"
+	"github.com/omochice/toy-socket-chat/internal/client/tcp"
+	"github.com/omochice/toy-socket-chat/internal/client/ws"
 )
 
 func main() {
 	// Parse command-line flags
 	serverAddr := flag.String("server", "localhost:8080", "Server address (e.g., localhost:8080)")
 	username := flag.String("username", "", "Username for chat")
+	proto := flag.String("protocol", "tcp", "Connection protocol (tcp or ws)")
 	flag.Parse()
 
 	if *username == "" {
 		log.Fatal("Username is required. Use -username flag")
 	}
 
-	// Create client
-	c := client.New(*serverAddr, *username)
+	// Create client based on protocol
+	var c client.Client
+	switch *proto {
+	case "tcp":
+		c = tcp.New(*serverAddr, *username)
+	case "ws":
+		addr := *serverAddr
+		if !strings.HasPrefix(addr, "ws://") && !strings.HasPrefix(addr, "wss://") {
+			addr = "ws://" + addr
+		}
+		c = ws.New(addr, *username)
+	default:
+		log.Fatalf("Unknown protocol: %s (use 'tcp' or 'ws')", *proto)
+	}
 
 	// Connect to server
 	if err := c.Connect(); err != nil {
