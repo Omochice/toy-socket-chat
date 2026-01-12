@@ -37,3 +37,34 @@ func TestHub_Register_MultipleClients(t *testing.T) {
 		t.Errorf("ClientCount() = %d, want 3", got)
 	}
 }
+
+func TestHub_Unregister(t *testing.T) {
+	hub := chat.NewHub()
+	client := &chat.Client{
+		Conn:     &mockConn{remoteAddr: "127.0.0.1:1234"},
+		Username: "testuser",
+		Outgoing: make(chan []byte, 10),
+	}
+
+	hub.Register(client)
+	hub.Unregister(client)
+
+	if got := hub.ClientCount(); got != 0 {
+		t.Errorf("ClientCount() = %d, want 0", got)
+	}
+}
+
+func TestHub_Unregister_NonExistentClient(t *testing.T) {
+	hub := chat.NewHub()
+	client := &chat.Client{
+		Conn:     &mockConn{remoteAddr: "127.0.0.1:1234"},
+		Username: "testuser",
+		Outgoing: make(chan []byte, 10),
+	}
+
+	hub.Unregister(client)
+
+	if got := hub.ClientCount(); got != 0 {
+		t.Errorf("ClientCount() = %d, want 0", got)
+	}
+}

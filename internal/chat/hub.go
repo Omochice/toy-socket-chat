@@ -32,6 +32,13 @@ func (h *Hub) Register(client *Client) {
 	h.clients[client] = true
 }
 
+// Unregister removes a client from the hub.
+func (h *Hub) Unregister(client *Client) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	delete(h.clients, client)
+}
+
 // ClientCount returns number of connected clients.
 func (h *Hub) ClientCount() int {
 	h.mu.RLock()
