@@ -28,7 +28,9 @@ func startMockServer(t *testing.T) (string, func()) {
 				}
 				// Echo back any received messages
 				go func(c net.Conn) {
-					defer c.Close()
+					defer func() {
+						_ = c.Close()
+					}()
 					buf := make([]byte, 4096)
 					for {
 						n, err := c.Read(buf)
@@ -36,7 +38,7 @@ func startMockServer(t *testing.T) (string, func()) {
 							return
 						}
 						if n > 0 {
-							c.Write(buf[:n])
+							_, _ = c.Write(buf[:n])
 						}
 					}
 				}(conn)
@@ -46,7 +48,7 @@ func startMockServer(t *testing.T) (string, func()) {
 
 	cleanup := func() {
 		close(done)
-		listener.Close()
+		_ = listener.Close()
 	}
 
 	return listener.Addr().String(), cleanup
@@ -56,7 +58,7 @@ func TestClient_Connect(t *testing.T) {
 	addr, cleanup := startMockServer(t)
 	defer cleanup()
 
-	c := client.New(addr, "testuser")
+	c := client.New(addr, "testuser", "tcp")
 	err := c.Connect()
 	if err != nil {
 		t.Fatalf("Failed to connect: %v", err)
@@ -77,7 +79,7 @@ func TestClient_SendMessage(t *testing.T) {
 	addr, cleanup := startMockServer(t)
 	defer cleanup()
 
-	c := client.New(addr, "testuser")
+	c := client.New(addr, "testuser", "tcp")
 	err := c.Connect()
 	if err != nil {
 		t.Fatalf("Failed to connect: %v", err)
@@ -95,7 +97,7 @@ func TestClient_ReceiveMessage(t *testing.T) {
 	addr, cleanup := startMockServer(t)
 	defer cleanup()
 
-	c := client.New(addr, "testuser")
+	c := client.New(addr, "testuser", "tcp")
 	err := c.Connect()
 	if err != nil {
 		t.Fatalf("Failed to connect: %v", err)
@@ -127,7 +129,7 @@ func TestClient_ReceiveMessage(t *testing.T) {
 }
 
 func TestClient_SendWithoutConnection(t *testing.T) {
-	c := client.New("localhost:9999", "testuser")
+	c := client.New("localhost:9999", "testuser", "tcp")
 
 	// Try to send without connecting
 	err := c.SendMessage("This should fail")
@@ -140,7 +142,7 @@ func TestClient_Join(t *testing.T) {
 	addr, cleanup := startMockServer(t)
 	defer cleanup()
 
-	c := client.New(addr, "testuser")
+	c := client.New(addr, "testuser", "tcp")
 	err := c.Connect()
 	if err != nil {
 		t.Fatalf("Failed to connect: %v", err)
@@ -158,7 +160,7 @@ func TestClient_Leave(t *testing.T) {
 	addr, cleanup := startMockServer(t)
 	defer cleanup()
 
-	c := client.New(addr, "testuser")
+	c := client.New(addr, "testuser", "tcp")
 	err := c.Connect()
 	if err != nil {
 		t.Fatalf("Failed to connect: %v", err)

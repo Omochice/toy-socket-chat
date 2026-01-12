@@ -13,7 +13,9 @@ import (
 func TestIntegration_ServerClientCommunication(t *testing.T) {
 	// Start server
 	srv := server.New(":0")
-	go srv.Start()
+	go func() {
+		_ = srv.Start()
+	}()
 	defer srv.Stop()
 
 	// Wait for server to start
@@ -25,7 +27,7 @@ func TestIntegration_ServerClientCommunication(t *testing.T) {
 	}
 
 	// Create and connect first client
-	client1 := client.New(serverAddr, "user1")
+	client1 := client.New(serverAddr, "user1", "tcp")
 	if err := client1.Connect(); err != nil {
 		t.Fatalf("Client 1 failed to connect: %v", err)
 	}
@@ -37,7 +39,7 @@ func TestIntegration_ServerClientCommunication(t *testing.T) {
 	}
 
 	// Create and connect second client
-	client2 := client.New(serverAddr, "user2")
+	client2 := client.New(serverAddr, "user2", "tcp")
 	if err := client2.Connect(); err != nil {
 		t.Fatalf("Client 2 failed to connect: %v", err)
 	}
@@ -124,7 +126,9 @@ func TestIntegration_ServerClientCommunication(t *testing.T) {
 func TestIntegration_MultipleClients(t *testing.T) {
 	// Start server
 	srv := server.New(":0")
-	go srv.Start()
+	go func() {
+		_ = srv.Start()
+	}()
 	defer srv.Stop()
 
 	// Wait for server to start
@@ -135,7 +139,7 @@ func TestIntegration_MultipleClients(t *testing.T) {
 	// Create 5 clients
 	clients := make([]*client.Client, 5)
 	for i := 0; i < 5; i++ {
-		c := client.New(serverAddr, fmt.Sprintf("user%d", i))
+		c := client.New(serverAddr, fmt.Sprintf("user%d", i), "tcp")
 		if err := c.Connect(); err != nil {
 			t.Fatalf("Client %d failed to connect: %v", i, err)
 		}

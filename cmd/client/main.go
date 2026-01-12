@@ -15,14 +15,20 @@ func main() {
 	// Parse command-line flags
 	serverAddr := flag.String("server", "localhost:8080", "Server address (e.g., localhost:8080)")
 	username := flag.String("username", "", "Username for chat")
+	protocol := flag.String("protocol", "tcp", "Protocol to use (tcp or ws)")
 	flag.Parse()
 
 	if *username == "" {
 		log.Fatal("Username is required. Use -username flag")
 	}
 
+	// Validate protocol
+	if *protocol != "tcp" && *protocol != "ws" {
+		log.Fatalf("Invalid protocol: %s. Use 'tcp' or 'ws'", *protocol)
+	}
+
 	// Create client
-	c := client.New(*serverAddr, *username)
+	c := client.New(*serverAddr, *username, *protocol)
 
 	// Connect to server
 	if err := c.Connect(); err != nil {
