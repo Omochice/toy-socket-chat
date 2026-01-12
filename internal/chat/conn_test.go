@@ -2,27 +2,55 @@ package chat_test
 
 import (
 	"context"
+	"io"
+	"sync"
 
 	"github.com/omochice/toy-socket-chat/internal/chat"
 )
 
 // mockConn is a mock implementation of chat.Conn for testing.
 type mockConn struct {
-	readData   []byte
+	readCh     chan []byte
 	readErr    error
-	writeData  []byte
+	writtenMu  sync.Mutex
+	written    [][]byte
 	writeErr   error
 	closed     bool
 	remoteAddr string
 }
 
+func newMockConn(addr string) *mockConn {
+	return &mockConn{
+		readCh:     make(chan []byte, 10),
+		remoteAddr: addr,
+	}
+}
+
 func (m *mockConn) Read(ctx context.Context) ([]byte, error) {
-	return m.readData, m.readErr
+	if m.readErr != nil {
+		return nil, m.readErr
+	}
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case data, ok := <-m.readCh:
+		if !ok {
+			return nil, io.EOF
+		}
+		return data, nil
+	}
 }
 
 func (m *mockConn) Write(ctx context.Context, data []byte) error {
-	m.writeData = data
-	return m.writeErr
+	if m.writeErr != nil {
+		return m.writeErr
+	}
+	m.writtenMu.Lock()
+	defer m.writtenMu.Unlock()
+	copied := make([]byte, len(data))
+	copy(copied, data)
+	m.written = append(m.written, copied)
+	return nil
 }
 
 func (m *mockConn) Close() error {
@@ -32,6 +60,12 @@ func (m *mockConn) Close() error {
 
 func (m *mockConn) RemoteAddr() string {
 	return m.remoteAddr
+}
+
+func (m *mockConn) GetWritten() [][]byte {
+	m.writtenMu.Lock()
+	defer m.writtenMu.Unlock()
+	return m.written
 }
 
 // Compile-time check that mockConn implements chat.Conn
