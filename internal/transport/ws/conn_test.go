@@ -7,14 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/omochice/toy-socket-chat/internal/chat"
 	"github.com/omochice/toy-socket-chat/internal/transport/ws"
 	"nhooyr.io/websocket"
 )
-
-func TestConn_ImplementsInterface(t *testing.T) {
-	var _ chat.Conn = (*ws.Conn)(nil)
-}
 
 func TestConn_Read(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

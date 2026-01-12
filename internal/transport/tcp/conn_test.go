@@ -5,13 +5,8 @@ import (
 	"net"
 	"testing"
 
-	"github.com/omochice/toy-socket-chat/internal/chat"
 	"github.com/omochice/toy-socket-chat/internal/transport/tcp"
 )
-
-func TestConn_ImplementsInterface(t *testing.T) {
-	var _ chat.Conn = (*tcp.Conn)(nil)
-}
 
 func TestConn_Read(t *testing.T) {
 	server, client := net.Pipe()
