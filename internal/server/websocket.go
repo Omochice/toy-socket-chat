@@ -12,22 +12,18 @@ import (
 
 // upgradeWebSocket performs WebSocket handshake and returns WebSocket connection
 func (s *Server) upgradeWebSocket(rawConn net.Conn, reader *bufio.Reader) (Connection, error) {
-	// Parse HTTP request
 	req, err := http.ReadRequest(reader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read HTTP request: %w", err)
 	}
 
-	// Validate WebSocket upgrade request
 	if !isWebSocketUpgrade(req) {
 		return nil, fmt.Errorf("not a WebSocket upgrade request")
 	}
 
-	// Compute accept key
 	key := req.Header.Get("Sec-WebSocket-Key")
 	acceptKey := computeAcceptKey(key)
 
-	// Send upgrade response
 	response := fmt.Sprintf(
 		"HTTP/1.1 101 Switching Protocols\r\n"+
 			"Upgrade: websocket\r\n"+
