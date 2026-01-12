@@ -39,6 +39,20 @@ func (h *Hub) Unregister(client *Client) {
 	delete(h.clients, client)
 }
 
+// Broadcast sends data to all clients except the sender.
+func (h *Hub) Broadcast(data []byte, sender *Client) {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	for client := range h.clients {
+		if client != sender {
+			select {
+			case client.Outgoing <- data:
+			default:
+			}
+		}
+	}
+}
+
 // ClientCount returns number of connected clients.
 func (h *Hub) ClientCount() int {
 	h.mu.RLock()
