@@ -17,16 +17,13 @@ func TestServer_Start(t *testing.T) {
 		errChan <- srv.Start()
 	}()
 
-	// Wait a bit for server to start
 	time.Sleep(100 * time.Millisecond)
 
-	// Try to get the actual address
 	addr := srv.Addr()
 	if addr == "" {
 		t.Fatal("Server address is empty")
 	}
 
-	// Try to connect to the server
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
 		t.Fatalf("Failed to connect to server: %v", err)
@@ -35,7 +32,6 @@ func TestServer_Start(t *testing.T) {
 
 	srv.Stop()
 
-	// Wait for server to stop
 	select {
 	case err := <-errChan:
 		if err != nil && err.Error() != "server stopped" {
@@ -54,12 +50,10 @@ func TestServer_ClientConnection(t *testing.T) {
 	}()
 	defer srv.Stop()
 
-	// Wait for server to start
 	time.Sleep(100 * time.Millisecond)
 
 	addr := srv.Addr()
 
-	// Connect first client
 	conn1, err := net.Dial("tcp", addr)
 	if err != nil {
 		t.Fatalf("Failed to connect client 1: %v", err)
@@ -68,7 +62,6 @@ func TestServer_ClientConnection(t *testing.T) {
 		_ = conn1.Close()
 	}()
 
-	// Send join message from client 1
 	joinMsg := protocol.Message{
 		Type:   protocol.MessageTypeJoin,
 		Sender: "user1",
@@ -78,15 +71,12 @@ func TestServer_ClientConnection(t *testing.T) {
 		t.Fatalf("Failed to encode join message: %v", err)
 	}
 
-	// Write message length first (simple protocol: 4 bytes for length, then data)
 	if _, err := conn1.Write(data); err != nil {
 		t.Fatalf("Failed to send join message: %v", err)
 	}
 
-	// Wait a bit for message processing
 	time.Sleep(100 * time.Millisecond)
 
-	// Connect second client
 	conn2, err := net.Dial("tcp", addr)
 	if err != nil {
 		t.Fatalf("Failed to connect client 2: %v", err)
@@ -95,7 +85,6 @@ func TestServer_ClientConnection(t *testing.T) {
 		_ = conn2.Close()
 	}()
 
-	// Send join message from client 2
 	joinMsg2 := protocol.Message{
 		Type:   protocol.MessageTypeJoin,
 		Sender: "user2",
@@ -108,10 +97,8 @@ func TestServer_ClientConnection(t *testing.T) {
 		t.Fatalf("Failed to send join message from client 2: %v", err)
 	}
 
-	// Wait for second client to be registered
 	time.Sleep(100 * time.Millisecond)
 
-	// Both connections should be maintained
 	count := srv.ClientCount()
 	if count != 2 {
 		t.Errorf("Expected 2 clients, got %d", count)
@@ -126,12 +113,10 @@ func TestServer_MessageBroadcast(t *testing.T) {
 	}()
 	defer srv.Stop()
 
-	// Wait for server to start
 	time.Sleep(100 * time.Millisecond)
 
 	addr := srv.Addr()
 
-	// Connect two clients
 	conn1, err := net.Dial("tcp", addr)
 	if err != nil {
 		t.Fatalf("Failed to connect client 1: %v", err)
@@ -148,10 +133,8 @@ func TestServer_MessageBroadcast(t *testing.T) {
 		_ = conn2.Close()
 	}()
 
-	// Wait for connections to be established
 	time.Sleep(100 * time.Millisecond)
 
-	// Send a text message from client 1
 	textMsg := protocol.Message{
 		Type:    protocol.MessageTypeText,
 		Sender:  "user1",
@@ -182,13 +165,10 @@ func TestServer_Stop(t *testing.T) {
 		errChan <- srv.Start()
 	}()
 
-	// Wait for server to start
 	time.Sleep(100 * time.Millisecond)
 
-	// Stop the server
 	srv.Stop()
 
-	// Verify server stopped
 	select {
 	case err := <-errChan:
 		if err != nil && err.Error() != "server stopped" {
