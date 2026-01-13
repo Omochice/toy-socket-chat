@@ -112,20 +112,17 @@ func TestMessage_EncodeDecodeRoundTrip(t *testing.T) {
 		Content: "Test message content",
 	}
 
-	// Encode
 	encoded, err := original.Encode()
 	if err != nil {
 		t.Fatalf("Encode failed: %v", err)
 	}
 
-	// Decode
 	var decoded protocol.Message
 	err = decoded.Decode(encoded)
 	if err != nil {
 		t.Fatalf("Decode failed: %v", err)
 	}
 
-	// Compare
 	if decoded.Type != original.Type {
 		t.Errorf("Type mismatch: got %v, want %v", decoded.Type, original.Type)
 	}
