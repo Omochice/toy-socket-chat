@@ -26,7 +26,6 @@ func startMockServer(t *testing.T) (string, func()) {
 				if err != nil {
 					return
 				}
-				// Echo back any received messages
 				go func(c net.Conn) {
 					defer func() {
 						_ = c.Close()
@@ -86,7 +85,6 @@ func TestClient_SendMessage(t *testing.T) {
 	}
 	defer c.Disconnect()
 
-	// Send a text message
 	err = c.SendMessage("Hello, World!")
 	if err != nil {
 		t.Errorf("Failed to send message: %v", err)
@@ -104,17 +102,13 @@ func TestClient_ReceiveMessage(t *testing.T) {
 	}
 	defer c.Disconnect()
 
-	// Start receiving messages
 	msgChan := c.Messages()
-
-	// Send a message (mock server will echo it back)
 	testMsg := "Test message"
 	err = c.SendMessage(testMsg)
 	if err != nil {
 		t.Fatalf("Failed to send message: %v", err)
 	}
 
-	// Wait for echo
 	select {
 	case msg := <-msgChan:
 		if msg.Content != testMsg {
@@ -131,7 +125,6 @@ func TestClient_ReceiveMessage(t *testing.T) {
 func TestClient_SendWithoutConnection(t *testing.T) {
 	c := client.New("localhost:9999", "testuser", "tcp")
 
-	// Try to send without connecting
 	err := c.SendMessage("This should fail")
 	if err == nil {
 		t.Error("Expected error when sending without connection")
@@ -149,7 +142,6 @@ func TestClient_Join(t *testing.T) {
 	}
 	defer c.Disconnect()
 
-	// Send join message
 	err = c.Join()
 	if err != nil {
 		t.Errorf("Failed to send join message: %v", err)
@@ -166,7 +158,6 @@ func TestClient_Leave(t *testing.T) {
 		t.Fatalf("Failed to connect: %v", err)
 	}
 
-	// Send leave message
 	err = c.Leave()
 	if err != nil {
 		t.Errorf("Failed to send leave message: %v", err)
