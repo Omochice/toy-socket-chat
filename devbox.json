@@ -5,7 +5,7 @@
 		"treefmt@2.4.0",
 		"go@1.26.0",
 		"golangci-lint@2.9.0",
-		"biome@2.3.14",
+		"biome@2.4.13",
 		"taplo@0.10.0",
 		"yamlfmt@0.21.0",
 		"toml-sort@0.24.3",
