@@ -1,51 +1,51 @@
 {
   "lockfile_version": "1",
   "packages": {
-    "biome@2.3.14": {
-      "last_modified": "2026-02-08T07:51:33Z",
-      "resolved": "github:NixOS/nixpkgs/fef9403a3e4d31b0a23f0bacebbec52c248fbb51#biome",
+    "biome@2.4.13": {
+      "last_modified": "2026-04-30T11:26:30Z",
+      "resolved": "github:NixOS/nixpkgs/7aaa00e7cc9be6c316cb5f6617bd740dd435c59d#biome",
       "source": "devbox-search",
-      "version": "2.3.14",
+      "version": "2.4.13",
       "systems": {
         "aarch64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/yh1nrncg2bm65fgiivbff45ypzsizidh-biome-2.3.14",
+              "path": "/nix/store/m9kzr4bqd37pgl1lg58hjb492k18xgvp-biome-2.4.13",
               "default": true
             }
           ],
-          "store_path": "/nix/store/yh1nrncg2bm65fgiivbff45ypzsizidh-biome-2.3.14"
+          "store_path": "/nix/store/m9kzr4bqd37pgl1lg58hjb492k18xgvp-biome-2.4.13"
         },
         "aarch64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/lz4w1hp3fmya2lp3gv0yxwmi8b949fml-biome-2.3.14",
+              "path": "/nix/store/2jr02rxcahpbs51yb55nd0i47jfdgpif-biome-2.4.13",
               "default": true
             }
           ],
-          "store_path": "/nix/store/lz4w1hp3fmya2lp3gv0yxwmi8b949fml-biome-2.3.14"
+          "store_path": "/nix/store/2jr02rxcahpbs51yb55nd0i47jfdgpif-biome-2.4.13"
         },
         "x86_64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/wi6n9a2dv1fkzxkgxbailrysprfs7nhx-biome-2.3.14",
+              "path": "/nix/store/8dwlhwas8wsdqx4lhw25j04d9j7aif41-biome-2.4.13",
               "default": true
             }
           ],
-          "store_path": "/nix/store/wi6n9a2dv1fkzxkgxbailrysprfs7nhx-biome-2.3.14"
+          "store_path": "/nix/store/8dwlhwas8wsdqx4lhw25j04d9j7aif41-biome-2.4.13"
         },
         "x86_64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/vn9rzhvjmvvvlj843nxgd1ps4288pcsf-biome-2.3.14",
+              "path": "/nix/store/qkq07rj4za1wl5ka5wiwn44n1k3xcsg6-biome-2.4.13",
               "default": true
             }
           ],
-          "store_path": "/nix/store/vn9rzhvjmvvvlj843nxgd1ps4288pcsf-biome-2.3.14"
+          "store_path": "/nix/store/qkq07rj4za1wl5ka5wiwn44n1k3xcsg6-biome-2.4.13"
         }
       }
     },
