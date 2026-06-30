@@ -49,51 +49,51 @@
         }
       }
     },
-    "buf@1.70.0": {
-      "last_modified": "2026-05-27T10:28:13Z",
-      "resolved": "github:NixOS/nixpkgs/4100e830e085863741bc69b156ec4ccd53ab5be0#buf",
+    "buf@1.71.0": {
+      "last_modified": "2026-06-27T07:37:20Z",
+      "resolved": "github:NixOS/nixpkgs/3d46470bb3030020f7e1361f33514854f5bfa86d#buf",
       "source": "devbox-search",
-      "version": "1.70.0",
+      "version": "1.71.0",
       "systems": {
         "aarch64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/ck9nvaxsfrjnwknicbi49wl4jxhgvlwg-buf-1.70.0",
+              "path": "/nix/store/ky7qnn9sb2sqyq7b4j4wr7059njqlm6z-buf-1.71.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/ck9nvaxsfrjnwknicbi49wl4jxhgvlwg-buf-1.70.0"
+          "store_path": "/nix/store/ky7qnn9sb2sqyq7b4j4wr7059njqlm6z-buf-1.71.0"
         },
         "aarch64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/2kwr95229zk5jxjwdjrphcscrjn05spc-buf-1.70.0",
+              "path": "/nix/store/271wrlc88gsqm1bgm0frvad5ass1in93-buf-1.71.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/2kwr95229zk5jxjwdjrphcscrjn05spc-buf-1.70.0"
+          "store_path": "/nix/store/271wrlc88gsqm1bgm0frvad5ass1in93-buf-1.71.0"
         },
         "x86_64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/v8f0lfal59m1cqfhhml20wb4flaigp5h-buf-1.70.0",
+              "path": "/nix/store/6iipkkpyxq356qc5gx4zwhswdqxa6yw1-buf-1.71.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/v8f0lfal59m1cqfhhml20wb4flaigp5h-buf-1.70.0"
+          "store_path": "/nix/store/6iipkkpyxq356qc5gx4zwhswdqxa6yw1-buf-1.71.0"
         },
         "x86_64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/85xszfzyc3ypv88fy25bxkk1dg7wsczd-buf-1.70.0",
+              "path": "/nix/store/21lh9zagq5sllazmlzi2yhfw78scjs8x-buf-1.71.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/85xszfzyc3ypv88fy25bxkk1dg7wsczd-buf-1.70.0"
+          "store_path": "/nix/store/21lh9zagq5sllazmlzi2yhfw78scjs8x-buf-1.71.0"
         }
       }
     },
