@@ -8,7 +8,7 @@
 		"biome@2.4.16",
 		"taplo@0.10.0",
 		"yamlfmt@0.21.0",
-		"toml-sort@0.24.3",
+		"toml-sort@0.24.4",
 		"protobuf@32.1",
 		"protoc-gen-go@1.36.11",
 		"buf@1.71.0"
