@@ -32,3 +32,6 @@ go.work.sum
 # .vscode/
 
 build
+
+# Locally generated TLS certificates (e.g. via mkcert, for WebTransport)
+*.pem
