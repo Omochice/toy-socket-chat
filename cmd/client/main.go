@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"crypto/x509"
 	"flag"
 	"fmt"
 	"log"
@@ -15,7 +16,12 @@ func main() {
 	// Parse command-line flags
 	serverAddr := flag.String("server", "localhost:8080", "Server address (e.g., localhost:8080)")
 	username := flag.String("username", "", "Username for chat")
-	protocol := flag.String("protocol", "tcp", "Protocol to use (tcp or ws)")
+	protocol := flag.String("protocol", "tcp", "Protocol to use (tcp, ws, or wt)")
+	caPath := flag.String(
+		"ca",
+		"",
+		"Path to a PEM CA certificate to trust (only used with -protocol wt)",
+	)
 	flag.Parse()
 
 	if *username == "" {
@@ -23,12 +29,12 @@ func main() {
 	}
 
 	// Validate protocol
-	if *protocol != "tcp" && *protocol != "ws" {
-		log.Fatalf("Invalid protocol: %s. Use 'tcp' or 'ws'", *protocol)
+	if *protocol != "tcp" && *protocol != "ws" && *protocol != "wt" {
+		log.Fatalf("Invalid protocol: %s. Use 'tcp', 'ws', or 'wt'", *protocol)
 	}
 
 	// Create client
-	c := client.New(*serverAddr, *username, *protocol)
+	c := client.New(*serverAddr, *username, *protocol, buildOptions(*protocol, *caPath)...)
 
 	// Connect to server
 	if err := c.Connect(); err != nil {
@@ -85,4 +91,30 @@ func main() {
 	}
 
 	log.Println("Disconnected from server")
+}
+
+// buildOptions translates the CA flag into client options. The CA only affects
+// TLS verification for WebTransport, so it is ignored (with a notice) for the
+// plaintext tcp and ws protocols rather than failing the whole invocation.
+func buildOptions(protocol, caPath string) []client.Option {
+	if caPath == "" {
+		return nil
+	}
+	if protocol != "wt" {
+		log.Printf(
+			"Notice: -ca is only used with -protocol wt; ignoring it for protocol %q",
+			protocol,
+		)
+		return nil
+	}
+
+	pemData, err := os.ReadFile(caPath)
+	if err != nil {
+		log.Fatalf("Failed to read CA certificate %q: %v", caPath, err)
+	}
+	pool := x509.NewCertPool()
+	if !pool.AppendCertsFromPEM(pemData) {
+		log.Fatalf("Failed to parse CA certificate from %q", caPath)
+	}
+	return []client.Option{client.WithRootCAs(pool)}
 }

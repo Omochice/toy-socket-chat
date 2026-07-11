@@ -1,11 +1,13 @@
 package client
 
 import (
+	"errors"
 	"net"
 	"sync"
 
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
+	"github.com/quic-go/webtransport-go"
 )
 
 // ClientConnection represents a connection to the server
@@ -111,4 +113,41 @@ func (wc *WebSocketClientConnection) Close() error {
 
 func (wc *WebSocketClientConnection) RemoteAddr() net.Addr {
 	return wc.conn.RemoteAddr()
+}
+
+// WebTransportClientConnection wraps a WebTransport session and its single
+// bidirectional stream. The chat protocol is treated as an unframed byte stream
+// over that stream, matching the framing assumption used for TCP.
+type WebTransportClientConnection struct {
+	session *webtransport.Session
+	stream  *webtransport.Stream
+}
+
+// NewWebTransportClientConnection creates a new WebTransport connection wrapper
+// over an established session and its bidirectional stream.
+func NewWebTransportClientConnection(
+	session *webtransport.Session,
+	stream *webtransport.Stream,
+) *WebTransportClientConnection {
+	return &WebTransportClientConnection{session: session, stream: stream}
+}
+
+func (wtc *WebTransportClientConnection) Write(data []byte) (int, error) {
+	return wtc.stream.Write(data)
+}
+
+func (wtc *WebTransportClientConnection) Read(buf []byte) (int, error) {
+	return wtc.stream.Read(buf)
+}
+
+func (wtc *WebTransportClientConnection) Close() error {
+	// Stream.Close only shuts the send direction, so the session must also be
+	// torn down to release the underlying QUIC connection and receive side.
+	streamErr := wtc.stream.Close()
+	sessErr := wtc.session.CloseWithError(0, "")
+	return errors.Join(streamErr, sessErr)
+}
+
+func (wtc *WebTransportClientConnection) RemoteAddr() net.Addr {
+	return wtc.session.RemoteAddr()
 }
