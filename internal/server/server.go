@@ -1,6 +1,7 @@
 package server
 
 import (
+	"crypto/tls"
 	"fmt"
 	"io"
 	"log"
@@ -8,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/omochice/toy-socket-chat/pkg/protocol"
+	"github.com/quic-go/webtransport-go"
 )
 
 // Client represents a connected client
@@ -25,15 +27,37 @@ type Server struct {
 	mu       sync.RWMutex
 	quit     chan struct{}
 	wg       sync.WaitGroup
+
+	// tlsCert, when non-nil, enables the WebTransport endpoint. WebTransport
+	// runs over HTTP/3 (QUIC) which mandates TLS, so it is only started when a
+	// certificate is configured.
+	tlsCert  *tls.Certificate
+	wtServer *webtransport.Server
+}
+
+// Option configures a Server created by New.
+type Option func(*Server)
+
+// WithTLS supplies the TLS certificate used for the WebTransport endpoint.
+// Providing it is what enables WebTransport; without it the server serves only
+// TCP and WebSocket.
+func WithTLS(cert tls.Certificate) Option {
+	return func(s *Server) {
+		s.tlsCert = &cert
+	}
 }
 
 // New creates a new Server instance
-func New(address string) *Server {
-	return &Server{
+func New(address string, opts ...Option) *Server {
+	s := &Server{
 		address: address,
 		clients: make(map[*Client]bool),
 		quit:    make(chan struct{}),
 	}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
 }
 
 // Start starts the TCP server
@@ -45,6 +69,14 @@ func (s *Server) Start() error {
 	s.listener = listener
 
 	log.Printf("Server started on %s", listener.Addr().String())
+
+	if s.tlsCert != nil {
+		if err := s.startWebTransport(); err != nil {
+			return fmt.Errorf("failed to start WebTransport: %w", err)
+		}
+	} else {
+		log.Printf("WebTransport disabled (no TLS certificate configured)")
+	}
 
 	return s.acceptLoop()
 }
@@ -89,6 +121,15 @@ func (s *Server) Stop() {
 		}
 	}
 	s.mu.Unlock()
+
+	// Close the WebTransport server so its Serve goroutine (blocked on
+	// accepting QUIC connections) returns; otherwise wg.Wait below would hang.
+	// Closing the server also closes the UDP socket it owns.
+	if s.wtServer != nil {
+		if err := s.wtServer.Close(); err != nil {
+			log.Printf("Error closing WebTransport server: %v", err)
+		}
+	}
 
 	s.wg.Wait()
 }
