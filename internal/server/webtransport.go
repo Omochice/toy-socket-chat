@@ -34,17 +34,14 @@ func NewWebTransportConnection(
 	}
 }
 
-// RemoteAddr returns the remote address of the underlying QUIC connection.
 func (c *WebTransportConnection) RemoteAddr() net.Addr {
 	return c.session.RemoteAddr()
 }
 
-// Write sends binary data to the client over the bidirectional stream.
 func (c *WebTransportConnection) Write(data []byte) (int, error) {
 	return c.stream.Write(data)
 }
 
-// Read receives binary data from the client over the bidirectional stream.
 func (c *WebTransportConnection) Read(buf []byte) (int, error) {
 	return c.stream.Read(buf)
 }
@@ -59,7 +56,6 @@ func (c *WebTransportConnection) Close() error {
 	return errors.Join(streamErr, sessErr)
 }
 
-// SetReadDeadline sets the read deadline on the bidirectional stream.
 func (c *WebTransportConnection) SetReadDeadline(t time.Time) error {
 	return c.stream.SetReadDeadline(t)
 }

@@ -110,8 +110,7 @@ func (c *Client) connectWebTransport() (ClientConnection, error) {
 	d := &webtransport.Dialer{
 		TLSClientConfig: &tls.Config{RootCAs: c.rootCAs},
 	}
-	// The path is "/" to mirror the WebSocket endpoint; the server routes the
-	// CONNECT request there.
+	// The server registers its WebTransport handler at "/".
 	_, session, err := d.Dial(context.Background(), fmt.Sprintf("https://%s/", c.address), nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect via WebTransport: %w", err)
