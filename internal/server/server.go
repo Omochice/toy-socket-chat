@@ -46,12 +46,17 @@ func (s *Server) Start() error {
 
 	log.Printf("Server started on %s", listener.Addr().String())
 
+	return s.acceptLoop()
+}
+
+// acceptLoop accepts incoming connections on s.listener until the server is stopped
+func (s *Server) acceptLoop() error {
 	for {
 		select {
 		case <-s.quit:
 			return fmt.Errorf("server stopped")
 		default:
-			conn, err := listener.Accept()
+			conn, err := s.listener.Accept()
 			if err != nil {
 				select {
 				case <-s.quit:
@@ -137,7 +142,11 @@ func (s *Server) handleConnection(rawConn net.Conn) {
 		log.Printf("TCP connection from %s", conn.RemoteAddr())
 	}
 
-	// Create client
+	s.register(conn)
+}
+
+// register creates a Client for conn, adds it to the client set, and starts handling it
+func (s *Server) register(conn Connection) {
 	client := &Client{
 		conn:     conn,
 		outgoing: make(chan []byte, 10),
