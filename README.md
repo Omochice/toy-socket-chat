@@ -9,7 +9,7 @@ It includes two CLI tools (server and client) that allow multiple users to excha
 
 ## Features
 
-- TCP Socket Communication: Direct communication using raw TCP sockets
+- Multiple Transports: Raw TCP sockets, WebSocket, and WebTransport (HTTP/3 over QUIC) are all supported, and clients on any of them share the same chat
 - Multiple Client Support: Multiple users can connect simultaneously
 - Message Broadcasting: Messages from one user are delivered to all others
 - Join/Leave Notifications: User join and leave events are notified to all participants
@@ -37,6 +37,10 @@ First, start the server:
 
 Options:
 - `-port`: Port for the server to listen on (default: `:8080`)
+- `-cert`: Path to a TLS certificate PEM file (enables WebTransport; requires `-key`)
+- `-key`: Path to a TLS private key PEM file (enables WebTransport; requires `-cert`)
+
+Without `-cert`/`-key`, the server accepts TCP and WebSocket connections only. See [WebTransport (HTTP/3 over QUIC)](#webtransport-http3-over-quic) below for how to enable the WebTransport endpoint.
 
 When the server starts, you'll see a message like this:
 ```
@@ -55,6 +59,8 @@ In a separate terminal, start the client:
 Options:
 - `-server`: Server address to connect to (default: `localhost:8080`)
 - `-username`: Username to display in chat (required)
+- `-protocol`: Transport to use: `tcp`, `ws`, or `wt` (default: `tcp`)
+- `-ca`: Path to a PEM CA certificate to trust when verifying the server (only used with `-protocol wt`; without it, the system trust store is used)
 
 When the client connects, you'll see a message like this:
 ```
@@ -68,6 +74,36 @@ Type your messages (or 'quit' to exit):
 2. Messages from other users are displayed in the format `[username]: message`
 3. User join/leave events are notified in the format `*** username joined the chat ***`
 4. To exit, type `quit` or `exit`
+
+### WebTransport (HTTP/3 over QUIC)
+
+WebTransport requires TLS, so a certificate and key are needed. [mkcert](https://github.com/FiloSottile/mkcert) generates a certificate trusted by a local development CA, which the client can then be pointed at explicitly.
+
+`mkcert` is included in the devbox environment.
+
+1. Generate a certificate and key for `localhost`:
+
+   ```bash
+   mkcert -cert-file server.pem -key-file server-key.pem localhost 127.0.0.1 ::1
+   ```
+
+   The first run creates a local CA under mkcert's CAROOT and uses it to sign the certificate. `mkcert -install` is not required, because the client below is pointed at the CA directly with `-ca` instead of relying on the system trust store.
+
+2. Start the server with the generated certificate and key:
+
+   ```bash
+   ./build/server -cert server.pem -key server-key.pem
+   ```
+
+   WebTransport is served on the same port number as the TCP listener, over UDP.
+
+3. Connect a client over WebTransport, trusting mkcert's local CA:
+
+   ```bash
+   ./build/client -protocol wt -ca "$(mkcert -CAROOT)/rootCA.pem" -username alice
+   ```
+
+WebTransport clients join the same chat as TCP and WebSocket clients; messages are broadcast across all three transports.
 
 ## Example Usage
 
