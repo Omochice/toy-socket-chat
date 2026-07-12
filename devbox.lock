@@ -245,6 +245,54 @@
         }
       }
     },
+    "mkcert@1.4.4": {
+      "last_modified": "2026-06-27T07:37:20Z",
+      "resolved": "github:NixOS/nixpkgs/3d46470bb3030020f7e1361f33514854f5bfa86d#mkcert",
+      "source": "devbox-search",
+      "version": "1.4.4",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/gncaf1pra6nxdjb9i90qj068arr6i0iq-mkcert-1.4.4",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/gncaf1pra6nxdjb9i90qj068arr6i0iq-mkcert-1.4.4"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/fkslp1gjzhsj33y6z9rrcv6y1q9j38zz-mkcert-1.4.4",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/fkslp1gjzhsj33y6z9rrcv6y1q9j38zz-mkcert-1.4.4"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/slavppbap2pj7a3pbvrji4845ldx5fjh-mkcert-1.4.4",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/slavppbap2pj7a3pbvrji4845ldx5fjh-mkcert-1.4.4"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/x2az8bxrfqz2sih6d5likrgakqjmjazm-mkcert-1.4.4",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/x2az8bxrfqz2sih6d5likrgakqjmjazm-mkcert-1.4.4"
+        }
+      }
+    },
     "protobuf@32.1": {
       "last_modified": "2025-10-07T08:41:47Z",
       "resolved": "github:NixOS/nixpkgs/bce5fe2bb998488d8e7e7856315f90496723793c#protobuf",

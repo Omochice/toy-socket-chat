@@ -2,6 +2,8 @@ package client
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"io"
 	"log"
@@ -10,6 +12,7 @@ import (
 
 	"github.com/gobwas/ws"
 	"github.com/omochice/toy-socket-chat/pkg/protocol"
+	"github.com/quic-go/webtransport-go"
 )
 
 // Client represents a chat client
@@ -17,6 +20,7 @@ type Client struct {
 	address  string
 	username string
 	protocol string
+	rootCAs  *x509.CertPool
 	conn     ClientConnection
 	messages chan protocol.Message
 	mu       sync.RWMutex
@@ -24,15 +28,32 @@ type Client struct {
 	wg       sync.WaitGroup
 }
 
+// Option configures optional Client behavior.
+type Option func(*Client)
+
+// WithRootCAs sets the certificate pool used to verify the server's TLS
+// certificate for the WebTransport protocol. A nil pool falls back to the
+// system trust store, so this is only needed for servers presenting a
+// certificate signed by a CA not present there (for example a local dev CA).
+func WithRootCAs(pool *x509.CertPool) Option {
+	return func(c *Client) {
+		c.rootCAs = pool
+	}
+}
+
 // New creates a new Client instance
-func New(address, username, proto string) *Client {
-	return &Client{
+func New(address, username, proto string, opts ...Option) *Client {
+	c := &Client{
 		address:  address,
 		username: username,
 		protocol: proto,
 		messages: make(chan protocol.Message, 10),
 		done:     make(chan struct{}),
 	}
+	for _, opt := range opts {
+		opt(c)
+	}
+	return c
 }
 
 // Connect establishes a connection to the server
@@ -43,6 +64,8 @@ func (c *Client) Connect() error {
 	switch c.protocol {
 	case "ws":
 		conn, err = c.connectWebSocket()
+	case "wt":
+		conn, err = c.connectWebTransport()
 	case "tcp":
 		fallthrough
 	default:
@@ -81,6 +104,28 @@ func (c *Client) connectWebSocket() (ClientConnection, error) {
 	}
 
 	return NewWebSocketClientConnection(wsConn), nil
+}
+
+func (c *Client) connectWebTransport() (ClientConnection, error) {
+	d := &webtransport.Dialer{
+		TLSClientConfig: &tls.Config{RootCAs: c.rootCAs},
+	}
+	// The server registers its WebTransport handler at "/".
+	_, session, err := d.Dial(context.Background(), fmt.Sprintf("https://%s/", c.address), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect via WebTransport: %w", err)
+	}
+
+	// A single bidirectional stream carries the whole chat session. QUIC opens
+	// streams lazily, so the server only observes it once the JOIN message that
+	// follows Connect is written.
+	stream, err := session.OpenStreamSync(context.Background())
+	if err != nil {
+		_ = session.CloseWithError(0, "")
+		return nil, fmt.Errorf("failed to open WebTransport stream: %w", err)
+	}
+
+	return NewWebTransportClientConnection(session, stream), nil
 }
 
 // Disconnect closes the connection to the server
