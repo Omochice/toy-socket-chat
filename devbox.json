@@ -10,7 +10,7 @@
 		"yamlfmt@0.21.0",
 		"toml-sort@0.24.4",
 		"protobuf@32.1",
-		"protoc-gen-go@1.36.11",
+		"protoc-gen-go@1.36.12",
 		"buf@1.72.0",
 		"mkcert@1.4.4"
 	],
