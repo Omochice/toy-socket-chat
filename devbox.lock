@@ -319,51 +319,41 @@
         }
       }
     },
-    "protoc-gen-go@1.36.11": {
-      "last_modified": "2026-06-27T07:37:20Z",
-      "resolved": "github:NixOS/nixpkgs/3d46470bb3030020f7e1361f33514854f5bfa86d#protoc-gen-go",
+    "protoc-gen-go@1.36.12": {
+      "last_modified": "2026-08-12T11:28:58Z",
+      "resolved": "github:NixOS/nixpkgs/044bfe75bfe4c7bbe043dc17b5e42ea823b84a09#protoc-gen-go",
       "source": "devbox-search",
-      "version": "1.36.11",
+      "version": "1.36.12",
       "systems": {
         "aarch64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/4yp776abzf3q02zwjm08j2im10n59im3-protoc-gen-go-1.36.11",
+              "path": "/nix/store/v9xwlkkck0ircs6p5dfqpkzfqzdp6way-protoc-gen-go-1.36.12",
               "default": true
             }
           ],
-          "store_path": "/nix/store/4yp776abzf3q02zwjm08j2im10n59im3-protoc-gen-go-1.36.11"
+          "store_path": "/nix/store/v9xwlkkck0ircs6p5dfqpkzfqzdp6way-protoc-gen-go-1.36.12"
         },
         "aarch64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/sj1hs7xlrinfclxvw7lhr6rfd0jp36zi-protoc-gen-go-1.36.11",
+              "path": "/nix/store/qwb7hm6h7var8nf2syjq1glnrcibinq4-protoc-gen-go-1.36.12",
               "default": true
             }
           ],
-          "store_path": "/nix/store/sj1hs7xlrinfclxvw7lhr6rfd0jp36zi-protoc-gen-go-1.36.11"
-        },
-        "x86_64-darwin": {
-          "outputs": [
-            {
-              "name": "out",
-              "path": "/nix/store/04frw1kp0wdr110v8fri2p8hap1fjav5-protoc-gen-go-1.36.11",
-              "default": true
-            }
-          ],
-          "store_path": "/nix/store/04frw1kp0wdr110v8fri2p8hap1fjav5-protoc-gen-go-1.36.11"
+          "store_path": "/nix/store/qwb7hm6h7var8nf2syjq1glnrcibinq4-protoc-gen-go-1.36.12"
         },
         "x86_64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/6mss9kb7byli3x4aakb6jmbwzma8kd0k-protoc-gen-go-1.36.11",
+              "path": "/nix/store/s09p36irn468iqr6djw1r6ch9zm0m36w-protoc-gen-go-1.36.12",
               "default": true
             }
           ],
-          "store_path": "/nix/store/6mss9kb7byli3x4aakb6jmbwzma8kd0k-protoc-gen-go-1.36.11"
+          "store_path": "/nix/store/s09p36irn468iqr6djw1r6ch9zm0m36w-protoc-gen-go-1.36.12"
         }
       }
     },
