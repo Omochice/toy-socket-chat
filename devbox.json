@@ -3,7 +3,7 @@
 	"packages": [
 		"formatjson5@0.2.6",
 		"treefmt@2.5.0",
-		"go@1.26.5",
+		"go@1.27.0",
 		"golangci-lint@2.12.2",
 		"biome@2.5.9",
 		"taplo@0.10.0",
